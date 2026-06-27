@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>密碼鎖解謎</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1c2128;       /* 工作檯深藍灰背景 */
+    --slate2:#161a20;
+    --graphite:#2a3139;    /* 鎖體 */
+    --graphite-lo:#1f242b;
+    --brass:#d9b878;       /* 黃銅高光 */
+    --brass-mid:#b8935a;
+    --brass-lo:#8a6d3f;
+    --steel:#c8ccd0;       /* 鎖鈎 */
+    --steel-lo:#828a93;
+    --velvet:#6b2231;      /* 內裡絨布 */
+    --velvet-lo:#4a1622;
+    --amber:#e8c479;       /* 成功光暈 */
+    --paper:#f4ead8;
+    --ink:#2b2620;
+    --txt:#e7e3da;
+    --txt-dim:#9aa1a9;
+    --line:rgba(255,255,255,.08);
+    --display:"Chakra Petch", system-ui, sans-serif;
+    --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:var(--cjk);
+    color:var(--txt);
+    background:
+      radial-gradient(120% 90% at 50% 18%, #29313a 0%, var(--slate) 42%, var(--slate2) 100%);
+    overflow:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+  .stage{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;
+  }
+
+  /* ---- 頂部齒輪（長按進後台） ---- */
+  .gear{
+    position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--txt-dim);background:rgba(255,255,255,.04);
+    border:1px solid var(--line);cursor:pointer;z-index:40;
+    transition:color .2s, background .2s, box-shadow .2s;
+  }
+  .gear:active{color:var(--brass)}
+  .gear svg{width:24px;height:24px}
+  .gear .ring{
+    position:absolute;inset:-3px;border-radius:50%;
+    border:2px solid var(--brass);
+    clip-path:inset(0 0 100% 0);
+    transition:none;opacity:.9;
+  }
+  .gear.holding .ring{
+    clip-path:inset(0 0 0 0);
+    transition:clip-path .6s linear;
+  }
+  /* ---- 鎖本體 ---- */
+  .lock{
+    position:relative;display:flex;flex-direction:column;align-items:center;
+    transform-origin:center;
+  }
+  .shackle{
+    width:150px;height:120px;margin-bottom:-26px;z-index:1;
+    border:18px solid var(--steel);
+    border-bottom:none;
+    border-radius:78px 78px 0 0;
+    background:transparent;
+    box-shadow: inset 2px 0 0 rgba(255,255,255,.35), inset -2px 0 0 rgba(0,0,0,.3);
+    transition:transform .55s cubic-bezier(.34,1.56,.64,1);
+  }
+  .shackle::before,.shackle::after{
+    content:"";position:absolute;bottom:0;width:18px;height:30px;background:linear-gradient(180deg,var(--steel),var(--steel-lo));
+    border-radius:0 0 4px 4px;
+  }
+  .shackle::before{left:0}
+  .shackle::after{right:0}
+  .lock.open .shackle{ transform:translateY(-58px) rotate(32deg) }
+
+  .body{
+    position:relative;width:330px;border-radius:34px;z-index:2;
+    background:
+      linear-gradient(180deg,#333b44 0%, var(--graphite) 30%, var(--graphite-lo) 100%);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,.7),
+      inset 0 2px 0 rgba(255,255,255,.08),
+      inset 0 -3px 8px rgba(0,0,0,.5);
+    padding:34px 22px 26px;
+    border:1px solid rgba(255,255,255,.05);
+  }
+  .brand{
+    text-align:center;font-family:var(--display);font-weight:600;letter-spacing:3px;
+    font-size:12px;color:var(--brass-mid);margin-bottom:18px;
+    text-transform:uppercase;
+  }
+
+  /* ---- 轉盤列 ---- */
+  .dials{display:flex;gap:12px;justify-content:center}
+  .dial{
+    width:100%;max-width:66px;flex:1;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .arrow{
+    width:38px;height:30px;border-radius:9px;border:none;cursor:pointer;
+    background:linear-gradient(180deg,#3b434d,#2b323a);
+    color:var(--brass);font-size:15px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 2px 3px rgba(0,0,0,.35);
+  }
+  .arrow:active{transform:translateY(1px);background:linear-gradient(180deg,#2b323a,#3b434d)}
+  .reel{
+    position:relative;width:100%;height:108px;border-radius:12px;overflow:hidden;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.04) 18%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.04) 82%, rgba(0,0,0,.35)),
+      linear-gradient(180deg, var(--brass), var(--brass-mid) 50%, var(--brass-lo));
+    box-shadow:inset 0 4px 8px rgba(0,0,0,.45), inset 0 -4px 8px rgba(0,0,0,.45);
+    cursor:grab;touch-action:none;
+  }
+  .reel:active{cursor:grabbing}
+  /* 上下漸層遮罩，營造圓筒感 */
+  .reel::before{
+    content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:linear-gradient(180deg, rgba(40,30,12,.6) 0%, rgba(40,30,12,0) 28%, rgba(40,30,12,0) 72%, rgba(40,30,12,.6) 100%);
+  }
+  .reel::after{ /* 中央讀取窗的高光線 */
+    content:"";position:absolute;left:0;right:0;top:50%;height:38px;transform:translateY(-50%);
+    z-index:2;pointer-events:none;border-top:1px solid rgba(255,255,255,.35);border-bottom:1px solid rgba(0,0,0,.35);
+    background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0));
+  }
+  .num-track{
+    position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;align-items:center;
+    font-family:var(--display);font-weight:600;
+  }
+  .num{
+    height:36px;line-height:36px;font-size:26px;color:#6b5430;width:100%;text-align:center;
+    text-shadow:0 1px 0 rgba(255,255,255,.25);
+  }
+  .num.cur{color:#2b2008;font-size:30px;font-weight:700}
+
+  /* ---- 提示 ---- */
+  .hint{margin-top:22px;color:var(--txt-dim);font-size:14px;letter-spacing:1px;min-height:20px;text-align:center;padding:0 16px}
+  .unlock-btn{
+    margin-top:18px;border:none;cursor:pointer;
+    padding:14px 46px;border-radius:14px;font-family:var(--display);font-weight:700;letter-spacing:4px;font-size:18px;
+    color:#1c1206;background:linear-gradient(180deg,var(--brass),var(--brass-mid));
+    box-shadow:0 8px 20px -6px rgba(217,184,120,.5), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .unlock-btn:active{transform:translateY(1px);filter:brightness(.96)}
+  .unlock-btn[disabled]{opacity:.4;filter:grayscale(.4);cursor:default;box-shadow:none}
+  .lock.open ~ .unlock-btn{display:none}
+  .relock{
+    margin-top:14px;display:none;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--txt);padding:10px 22px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer;
+  }
+  .relock:active{background:rgba(255,255,255,.1)}
+  .lock.open ~ .relock{display:inline-block}
+
+  /* 答錯時鎖體抖動 + 紅閃 */
+  .lock.wrong{animation:lockwrong .4s}
+  @keyframes lockwrong{0%,100%{transform:translateX(0)}15%,55%{transform:translateX(-9px)}35%,75%{transform:translateX(9px)}}
+  .lock.wrong .body{box-shadow:0 30px 60px -20px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.08), 0 0 0 2px rgba(220,90,80,.7)}
+
+  /* ---- 暴力破解鎖定遮罩 ---- */
+  .lockout{position:fixed;inset:0;z-index:22;display:none;align-items:center;justify-content:center;padding:24px;
+    background:rgba(10,12,16,.78);backdrop-filter:blur(4px)}
+  .lockout.show{display:flex}
+  .lk-card{text-align:center;background:linear-gradient(180deg,#262c34,#1a1f26);border:1px solid var(--line);
+    border-radius:18px;padding:30px 34px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7);max-width:300px}
+  .lk-icon{font-size:34px;margin-bottom:8px}
+  .lk-title{font-family:var(--cjk);font-weight:700;color:#fff;font-size:17px;margin-bottom:10px}
+  .lk-time{color:var(--brass);font-family:var(--display);font-size:15px;letter-spacing:1px}
+  .lk-time span{font-size:30px;font-weight:700;display:inline-block;min-width:48px}
+
+  /* ---- 開鎖後的道具揭示 ---- */
+  .reveal{
+    position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(120% 100% at 50% 40%, rgba(232,196,121,.14), rgba(0,0,0,.78) 60%);
+    backdrop-filter:blur(3px);padding:24px;
+  }
+  .reveal.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .case{
+    position:relative;max-width:520px;width:100%;border-radius:20px;padding:18px;
+    background:linear-gradient(180deg,var(--velvet),var(--velvet-lo));
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.8), inset 0 2px 0 rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.08);
+    transform:translateY(14px) scale(.96);opacity:0;
+  }
+  .reveal.show .case{animation:rise .5s cubic-bezier(.2,.9,.3,1.2) .08s forwards}
+  @keyframes rise{to{transform:none;opacity:1}}
+  .case .tag{font-family:var(--display);letter-spacing:3px;font-size:11px;color:var(--amber);text-transform:uppercase;margin-bottom:12px;text-align:center}
+  .paper{
+    width:100%;border-radius:8px;display:block;background:var(--paper);cursor:zoom-in;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .paper-img{width:100%;display:block;border-radius:8px}
+  .paper-empty{
+    min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:#7a6a4f;font-size:15px;line-height:1.7;padding:32px;border:2px dashed #c9b48d;border-radius:8px;
+  }
+  .caption{margin-top:14px;color:#f7e9cf;font-size:15px;line-height:1.7;text-align:center;white-space:pre-wrap}
+  .case .close{
+    margin:16px auto 2px;display:block;border:1px solid rgba(255,255,255,.2);
+    background:rgba(0,0,0,.2);color:#fff;padding:10px 26px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer;
+  }
+
+  /* ---- 全螢幕看圖 ---- */
+  .lightbox{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);padding:12px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+  /* ---- 後台 ---- */
+  .admin{
+    position:fixed;inset:0;z-index:50;display:none;
+    background:linear-gradient(180deg,#13171c,#0e1115);
+    overflow:auto;padding:26px 20px 60px;
+  }
+  .admin.show{display:block}
+  .admin-wrap{max-width:560px;margin:0 auto}
+  .admin h1{font-family:var(--display);font-weight:700;letter-spacing:1px;font-size:22px;margin:6px 0 4px;color:#fff}
+  .admin .sub{color:var(--txt-dim);font-size:13px;margin-bottom:24px}
+  .field{margin-bottom:24px}
+  .field>label{display:block;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:10px}
+  .field .desc{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .seg{display:inline-flex;background:#1c2026;border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+  .seg button{border:none;background:transparent;color:var(--txt-dim);padding:9px 20px;border-radius:8px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .seg button.on{background:var(--brass-mid);color:#1c1206;font-weight:600}
+  .pw-row{display:flex;gap:10px}
+  .dcard{background:#1c2026;border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:10px}
+  .dcard .dtitle{font-family:var(--display);font-weight:600;font-size:13px;color:var(--brass-mid);letter-spacing:2px;margin-bottom:11px;text-transform:uppercase}
+  .drow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .dcol{display:flex;flex-direction:column;gap:6px}
+  .dcol>span{font-size:11px;color:var(--txt-dim)}
+  .dcol.grow{flex:1;min-width:130px}
+  .dsel,.dcustom{background:#13171c;border:1px solid var(--line);border-radius:10px;color:var(--txt);
+    padding:11px 12px;font-size:15px;font-family:var(--cjk);width:100%}
+  .dsel:focus,.dcustom:focus{outline:none;border-color:var(--brass-mid)}
+  .dcol.type{min-width:118px}
+  .dcol.ans{min-width:78px}
+  .ans-sel{font-family:var(--display);font-weight:700;color:var(--brass);text-align:center}
+  .dcol.custom-col{display:none}
+  .dcard.is-custom .custom-col{display:flex}
+  .pw-row input{
+    flex:1;max-width:70px;height:64px;text-align:center;font-family:var(--display);font-weight:700;font-size:28px;
+    background:#1c2026;border:1px solid var(--line);border-radius:12px;color:var(--brass);
+  }
+  .pw-row input:focus{outline:none;border-color:var(--brass-mid)}
+  .filebtn{display:inline-flex;align-items:center;gap:8px;background:#1c2026;border:1px solid var(--line);color:var(--txt);
+    padding:12px 18px;border-radius:11px;font-size:14px;cursor:pointer}
+  .filebtn:active{background:#232831}
+  input[type=file]{display:none}
+  .url-input,.cap-input{
+    width:100%;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);
+    padding:12px 14px;font-size:14px;font-family:var(--cjk);margin-top:10px;
+  }
+  .url-input:focus,.cap-input:focus{outline:none;border-color:var(--brass-mid)}
+  .cap-input{min-height:80px;resize:vertical}
+  .preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#15181d;display:none}
+  .preview.show{display:block}
+  .preview img{width:100%;border-radius:8px;display:block}
+  .toggle{display:flex;align-items:center;gap:12px}
+  .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
+  .switch.on{background:var(--brass-mid)}
+  .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+  .switch.on i{left:25px}
+  .actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .btn.primary:active{filter:brightness(.95)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line)}
+  .saved.show{opacity:1;transform:translateX(-50%)}
+
+  /* ---- 復古寶箱開場 ---- */
+  .intro{
+    position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;cursor:pointer;
+    background:radial-gradient(120% 90% at 50% 36%, #2b333d 0%, var(--slate) 46%, var(--slate2) 100%);
+  }
+  .intro.hide{display:none}
+  .chest-wrap{position:relative;width:min(72vw,330px);filter:drop-shadow(0 32px 40px rgba(0,0,0,.55))}
+  .chest{width:100%;display:block;overflow:visible;animation:bob 3.4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  .chest .lid{transform-box:fill-box;transform-origin:50% 96%;transition:transform .7s cubic-bezier(.34,1.4,.5,1)}
+  .chest-glow{
+    position:absolute;left:50%;top:46%;width:64%;height:42%;
+    transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;
+    background:radial-gradient(circle, rgba(255,226,150,.95), rgba(255,198,86,.4) 42%, transparent 70%);
+  }
+  .intro-hint{
+    margin-top:30px;color:var(--brass);font-family:var(--display);letter-spacing:4px;font-size:15px;
+    animation:hintpulse 2s ease-in-out infinite;text-transform:uppercase;
+  }
+  @keyframes hintpulse{0%,100%{opacity:.45}50%{opacity:1}}
+  .intro.opening{cursor:default}
+  .intro.opening .chest{animation:none}
+  .intro.opening .lid{transform:translateY(-16px) rotate(-11deg)}
+  .intro.opening .chest-glow{animation:burst .7s ease forwards}
+  @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}45%{opacity:1}100%{opacity:.9;transform:translate(-50%,-50%) scale(2.5)}}
+  .intro.opening .intro-hint{opacity:0;transition:opacity .2s}
+  .intro.fade{opacity:0;transition:opacity .4s ease .22s}
+  /* 成功開箱：箱子重新出現但不浮動、不顯示提示，僅在解鎖後開蓋 */
+  .intro.success{cursor:default}
+  .intro.success .chest{animation:none}
+  .intro.success .intro-hint{display:none}
+
+  /* ---- 後台密碼框 ---- */
+  .gate{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;padding:24px;
+    background:rgba(8,10,13,.82);backdrop-filter:blur(3px)}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:320px;padding:24px;border-radius:18px;
+    background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .gate-title{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:16px;text-align:center}
+  .gate-sub{color:var(--txt-dim);font-size:12px;text-align:center;margin:6px 0 16px}
+  .gate-input{width:100%;height:54px;text-align:center;font-size:22px;letter-spacing:6px;font-family:var(--display);
+    background:#13171c;border:1px solid var(--line);border-radius:12px;color:var(--brass)}
+  .gate-input:focus{outline:none;border-color:var(--brass-mid)}
+  .gate-err{height:18px;color:#e8857a;font-size:13px;text-align:center;margin:9px 0 3px}
+  .gate-actions{display:flex;gap:10px}
+  .gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .shake{animation:shake .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important;animation:none!important}
+  }
+  @media (max-height:560px){
+    .reel{height:88px}.shackle{height:96px}
+  }
+</style>
+</head>
+<body>
+
+<!-- 齒輪：長按進後台 -->
+<div class="gear" id="gear" title="長按進入後台">
+  <span class="ring"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</div>
+
+<!-- 復古寶箱開場 -->
+<div class="intro" id="intro">
+  <div class="chest-wrap">
+    <svg class="chest" viewBox="0 0 240 210" aria-label="寶箱">
+      <defs>
+        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8a5e35"/><stop offset="1" stop-color="#5a3a20"/>
+        </linearGradient>
+        <linearGradient id="woodLid" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9a6c40"/><stop offset="1" stop-color="#6e4727"/>
+        </linearGradient>
+        <linearGradient id="band" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#3a3f46"/><stop offset=".5" stop-color="#5b626b"/><stop offset="1" stop-color="#2c3036"/>
+        </linearGradient>
+        <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f0d493"/><stop offset=".5" stop-color="#cda85e"/><stop offset="1" stop-color="#a87f3c"/>
+        </linearGradient>
+        <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#6e4727"/><stop offset="1" stop-color="#3f2917"/>
+        </linearGradient>
+      </defs>
+
+      <!-- 箱底座 -->
+      <rect x="16" y="176" width="208" height="22" rx="7" fill="url(#base)" stroke="#2c1c0e" stroke-width="2"/>
+      <!-- 箱身 -->
+      <rect x="24" y="100" width="192" height="82" rx="8" fill="url(#wood)" stroke="#33210f" stroke-width="2"/>
+      <line x1="72" y1="104" x2="72" y2="180" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+      <line x1="120" y1="104" x2="120" y2="180" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+      <line x1="168" y1="104" x2="168" y2="180" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+      <!-- 箱身鐵條 -->
+      <rect x="48" y="100" width="16" height="82" fill="url(#band)" stroke="#20242a" stroke-width="1"/>
+      <rect x="176" y="100" width="16" height="82" fill="url(#band)" stroke="#20242a" stroke-width="1"/>
+      <!-- 鉚釘 -->
+      <circle cx="56" cy="112" r="2.4" fill="#1c2026"/><circle cx="56" cy="170" r="2.4" fill="#1c2026"/>
+      <circle cx="184" cy="112" r="2.4" fill="#1c2026"/><circle cx="184" cy="170" r="2.4" fill="#1c2026"/>
+
+      <!-- 上蓋（可開啟） -->
+      <g class="lid">
+        <path d="M22,100 L22,80 Q22,60 42,60 L198,60 Q218,60 218,80 L218,100 Z" fill="url(#woodLid)" stroke="#33210f" stroke-width="2"/>
+        <path d="M22,100 L22,80 Q22,60 42,60 L198,60 Q218,60 218,80 L218,100 Z" fill="rgba(255,255,255,.06)"/>
+        <rect x="48" y="60" width="16" height="40" fill="url(#band)" stroke="#20242a" stroke-width="1"/>
+        <rect x="176" y="60" width="16" height="40" fill="url(#band)" stroke="#20242a" stroke-width="1"/>
+        <circle cx="56" cy="72" r="2.4" fill="#1c2026"/>
+        <circle cx="184" cy="72" r="2.4" fill="#1c2026"/>
+      </g>
+
+      <!-- 鎖扣 -->
+      <rect x="104" y="86" width="32" height="36" rx="6" fill="url(#brass)" stroke="#7a5a2c" stroke-width="2"/>
+      <circle cx="120" cy="100" r="4.6" fill="#2a1d0c"/>
+      <rect x="117.6" y="100" width="4.8" height="11" rx="2" fill="#2a1d0c"/>
+    </svg>
+    <div class="chest-glow"></div>
+  </div>
+  <div class="intro-hint">輕觸寶箱開始</div>
+</div>
+
+<!-- 前台 -->
+<div class="stage" id="stage">
+  <div class="lock" id="lock">
+    <div class="shackle"></div>
+    <div class="body">
+      <div class="brand">SECRET LOCK</div>
+      <div class="dials" id="dials"></div>
+    </div>
+  </div>
+  <div class="hint" id="hint">轉動轉盤對出密碼，再按開鎖</div>
+  <button class="unlock-btn" id="unlockBtn">開　鎖</button>
+  <button class="relock" id="relock">重新鎖上</button>
+
+  <div class="lockout" id="lockout">
+    <div class="lk-card">
+      <div class="lk-icon">🔒</div>
+      <div class="lk-title">錯誤次數過多</div>
+      <div class="lk-time"><span id="lkSec">60</span> 秒後可再試</div>
+    </div>
+  </div>
+</div>
+
+<!-- 道具揭示 -->
+<div class="reveal" id="reveal">
+  <div class="case">
+    <div class="tag">UNLOCKED · 鎖已開啟</div>
+    <div class="paper" id="paperHolder"></div>
+    <div class="caption" id="caption"></div>
+    <button class="close" id="closeReveal">收起</button>
+  </div>
+</div>
+
+<!-- 全螢幕看圖 -->
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt="道具放大"></div>
+
+<!-- 後台密碼 -->
+<div class="gate" id="gate">
+  <div class="gate-box" id="gateBox">
+    <div class="gate-title" id="gateTitle">後台密碼</div>
+    <div class="gate-sub" id="gateSub">請輸入密碼以進入設定</div>
+    <input class="gate-input" id="gateInput" type="password" autocomplete="off" placeholder="••••">
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-actions">
+      <button class="gate-cancel" id="gateCancel">取消</button>
+      <button class="gate-ok" id="gateOk">進入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 後台 -->
+<div class="admin" id="admin">
+  <div class="admin-wrap">
+    <h1>後台設定</h1>
+    <div class="sub">設定密碼與鎖內道具，玩家不會看到這個畫面。</div>
+
+    <div class="field">
+      <label>密碼長度（轉盤數量）</label>
+      <div class="seg" id="lenSeg">
+        <button data-len="3">3 個</button>
+        <button data-len="4">4 個</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>各轉盤內容</label>
+      <div id="dialEditor"></div>
+      <div class="desc">每個轉盤可獨立選類型。選「自定」時，打出要顯示的字（中文、符號、英數皆可），轉盤就只會出現這幾個字，玩家轉起來更快。「答案」是這個轉盤要對到的字。</div>
+    </div>
+
+    <div class="field">
+      <label>道具圖片（一張紙）</label>
+      <label class="filebtn" for="fileInput">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        上傳圖片
+      </label>
+      <input type="file" id="fileInput" accept="image/*">
+      <input class="url-input" id="urlInput" placeholder="或貼上圖片網址 https://...">
+      <div class="preview" id="previewBox"><img id="previewImg" alt="預覽"></div>
+      <div class="desc">建議用清楚的紙條/線索照片。上傳的圖片會內嵌在檔案裡，離線也能用。</div>
+    </div>
+
+    <div class="field">
+      <label>說明文字（選填）</label>
+      <textarea class="cap-input" id="capInput" placeholder="會顯示在道具下方，例如：把這四個字交給關主。"></textarea>
+    </div>
+
+    <div class="field">
+      <label>音效</label>
+      <div class="toggle">
+        <div class="switch on" id="soundSwitch"><i></i></div>
+        <span style="color:var(--txt-dim);font-size:14px">轉盤與開鎖音效</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>後台密碼</label>
+      <input class="url-input" id="adminPassInput" type="text" autocomplete="off" placeholder="進入後台用的密碼">
+      <div class="desc">下次長按右上角齒輪進入後台時，要輸入這組密碼。請設定後牢記，避免留空。</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="previewFront">預覽前台</button>
+      <button class="btn primary" id="saveBtn">儲存並返回</button>
+    </div>
+  </div>
+</div>
+
+<div class="saved" id="savedToast">已儲存</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 儲存（localStorage，失敗則用記憶體） ---------- */
+  var KEY="cipherlock.config.v1";
+  var mem=null;
+  function load(){
+    try{var s=localStorage.getItem(KEY);if(s)return JSON.parse(s);}catch(e){}
+    return mem;
+  }
+  function save(c){
+    mem=c;
+    try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}
+  }
+
+  var NUMS="0123456789", ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  function charsOf(type){
+    if(type==="alpha")return ALPHA.split("");
+    if(type==="alphanum")return (NUMS+ALPHA).split("");
+    return NUMS.split("");
+  }
+  // 自定字串拆成「不重複字元」陣列（支援中文、符號、表情）
+  function uniqChars(str){
+    var arr=Array.from(String(str||"")), seen={}, out=[];
+    for(var i=0;i<arr.length;i++){var ch=arr[i]; if(ch.trim()==="")continue; if(!seen[ch]){seen[ch]=1;out.push(ch);} }
+    return out;
+  }
+  // 取得某個轉盤要顯示的字元陣列
+  function dialChars(d){
+    if(!d) return charsOf("num");
+    if(d.type==="custom"){ var u=uniqChars(d.custom); return u.length?u:["0"]; }
+    return charsOf(d.type);
+  }
+  function makeDial(ans){ return {type:"num", custom:"", ans:String(ans)}; }
+
+  // 防呆：長度、各轉盤類型、答案字元對齊
+  function normalize(c){
+    c.length = (c.length===3?3:4);
+    if(typeof c.adminPass!=="string" || c.adminPass==="") c.adminPass="1234";
+    c.dials = c.dials || [];
+    c.dials.length = c.length;
+    for(var i=0;i<c.length;i++){
+      var d=c.dials[i]||makeDial("0");
+      if(["num","alpha","alphanum","custom"].indexOf(d.type)<0) d.type="num";
+      d.custom = d.custom||"";
+      var set=dialChars(d);
+      var ans=(d.ans==null?"":String(d.ans));
+      if(d.type!=="custom") ans=ans.toUpperCase();
+      if(set.indexOf(ans)<0) ans=set[0];
+      d.ans=ans;
+      c.dials[i]=d;
+    }
+  }
+  // 從舊版設定（cfg.charset + cfg.password）轉成新版（cfg.dials）
+  function migrate(c){
+    if(!c) return { length:4, dials:[makeDial("1"),makeDial("2"),makeDial("3"),makeDial("4")], image:"", caption:"", sound:true, adminPass:"1234" };
+    if(!c.dials){
+      var len=(c.length===3?3:4), set=charsOf(c.charset||"num"), dials=[];
+      for(var i=0;i<len;i++){
+        var ans=(c.password&&c.password[i]!=null)?String(c.password[i]).toUpperCase():set[0];
+        if(set.indexOf(ans)<0)ans=set[0];
+        dials.push({type:(c.charset||"num"), custom:"", ans:ans});
+      }
+      c={ length:len, dials:dials, image:c.image||"", caption:c.caption||"", sound:c.sound!==false, adminPass:c.adminPass||"1234" };
+    }
+    normalize(c);
+    return c;
+  }
+
+  var cfg = migrate(load());
+
+  /* ---------- 音效（Web Audio，無外部檔） ---------- */
+  var actx=null;
+  function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return actx; }
+  function tone(freq,dur,type,gain){
+    if(!cfg.sound)return; var c=ac(); if(!c)return;
+    var o=c.createOscillator(),g=c.createGain();
+    o.type=type||"square"; o.frequency.value=freq;
+    g.gain.value=gain||0.04;
+    o.connect(g);g.connect(c.destination);
+    var t=c.currentTime;
+    g.gain.setValueAtTime(g.gain.value,t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t);o.stop(t+dur);
+  }
+  function tick(){ tone(220,0.05,"square",0.05); }
+  function clunk(){ tone(150,0.12,"sawtooth",0.09); setTimeout(function(){tone(90,0.22,"sawtooth",0.1);},90); }
+  function creak(){ tone(110,0.2,"sawtooth",0.05); setTimeout(function(){tone(180,0.14,"triangle",0.05);},130); setTimeout(function(){tone(300,0.12,"triangle",0.04);},260); }
+  function buzz(){ tone(95,0.16,"square",0.07); setTimeout(function(){tone(70,0.2,"square",0.07);},90); }
+
+  /* ---------- 前台轉盤 ---------- */
+  var current=[];
+  var unlocked=false;
+  var dialsEl=document.getElementById("dials");
+  var lockEl=document.getElementById("lock");
+  var hintEl=document.getElementById("hint");
+  var unlockBtn=document.getElementById("unlockBtn");
+  var lockoutEl=document.getElementById("lockout");
+  var lkSec=document.getElementById("lkSec");
+  var failCount=0, lockedOut=false, lockoutTimer=null;
+  var MAX_FAIL=3, LOCK_SECONDS=60;
+  var defaultHint="轉動轉盤對出密碼，再按開鎖";
+
+  function buildDials(){
+    current=[]; dialsEl.innerHTML="";
+    for(var i=0;i<cfg.length;i++){
+      current.push(0);
+      var d=document.createElement("div");
+      d.className="dial";
+      d.innerHTML=
+        '<button class="arrow up" aria-label="增加">▲</button>'+
+        '<div class="reel"><div class="num-track">'+
+          '<div class="num prev"></div><div class="num cur"></div><div class="num next"></div>'+
+        '</div></div>'+
+        '<button class="arrow down" aria-label="減少">▼</button>';
+      (function(idx,node){
+        node.querySelector(".up").addEventListener("click",function(){step(idx,1);});
+        node.querySelector(".down").addEventListener("click",function(){step(idx,-1);});
+        attachSwipe(node.querySelector(".reel"),idx);
+      })(i,d);
+      dialsEl.appendChild(d);
+      renderDial(i);
+    }
+  }
+  function renderDial(i){
+    var node=dialsEl.children[i];
+    var set=dialChars(cfg.dials[i]), n=set.length;
+    var v=((current[i]%n)+n)%n; current[i]=v;
+    node.querySelector(".prev").textContent=set[(v+n-1)%n];
+    node.querySelector(".cur").textContent=set[v];
+    node.querySelector(".next").textContent=set[(v+1)%n];
+  }
+  function step(i,dir){
+    if(unlocked||lockedOut)return;
+    var n=dialChars(cfg.dials[i]).length;
+    current[i]=(current[i]+dir+n)%n;
+    var track=dialsEl.children[i].querySelector(".num-track");
+    track.style.transition="none";
+    track.style.transform="translateY("+(dir>0?12:-12)+"px)";
+    requestAnimationFrame(function(){
+      track.style.transition="transform .12s ease";
+      track.style.transform="translateY(0)";
+    });
+    renderDial(i);
+    tick();
+  }
+  function attachSwipe(reel,idx){
+    var startY=0,acc=0,active=false;
+    reel.addEventListener("pointerdown",function(e){
+      if(unlocked||lockedOut)return; active=true;startY=e.clientY;acc=0;
+      reel.setPointerCapture(e.pointerId);
+    });
+    reel.addEventListener("pointermove",function(e){
+      if(!active)return;
+      var delta=e.clientY-startY;
+      // 每移動 26px 觸發一階：往上滑數字變大
+      while(delta-acc<=-26){ acc-=26; step(idx,1); }
+      while(delta-acc>=26){ acc+=26; step(idx,-1); }
+    });
+    function end(){active=false;}
+    reel.addEventListener("pointerup",end);
+    reel.addEventListener("pointercancel",end);
+    reel.addEventListener("pointerleave",function(){active=false;});
+  }
+  function isSolved(){
+    for(var i=0;i<cfg.length;i++){
+      var set=dialChars(cfg.dials[i]);
+      if(set[current[i]]!==cfg.dials[i].ans)return false;
+    }
+    return true;
+  }
+  function tryUnlock(){
+    if(unlocked||lockedOut)return;
+    if(isSolved()){ failCount=0; openLock(); return; }
+    // 答錯
+    failCount++;
+    buzz();
+    lockEl.classList.remove("wrong"); void lockEl.offsetWidth; lockEl.classList.add("wrong");
+    if(navigator.vibrate){ try{navigator.vibrate(120);}catch(e){} }
+    if(failCount>=MAX_FAIL){ startLockout(); }
+    else{
+      var left=MAX_FAIL-failCount;
+      hintEl.textContent="密碼錯誤，還可以試 "+left+" 次";
+    }
+  }
+  unlockBtn.addEventListener("click",tryUnlock);
+
+  function startLockout(){
+    lockedOut=true;
+    unlockBtn.setAttribute("disabled","disabled");
+    hintEl.textContent="";
+    var remain=LOCK_SECONDS;
+    lkSec.textContent=remain;
+    lockoutEl.classList.add("show");
+    clearInterval(lockoutTimer);
+    lockoutTimer=setInterval(function(){
+      remain--;
+      lkSec.textContent=remain;
+      if(remain<=0){ endLockout(); }
+    },1000);
+  }
+  function endLockout(){
+    clearInterval(lockoutTimer); lockoutTimer=null;
+    lockedOut=false; failCount=0;
+    lockoutEl.classList.remove("show");
+    unlockBtn.removeAttribute("disabled");
+    hintEl.textContent=defaultHint;
+  }
+
+  function openLock(){
+    unlocked=true;
+    lockEl.classList.remove("wrong");
+    lockEl.classList.add("open");
+    hintEl.textContent="鎖已開啟";
+    clunk();
+    // 解鎖成功後才播放開箱動畫，再翻出紙條
+    setTimeout(chestReveal,500);
+  }
+  function relock(){
+    unlocked=false; failCount=0;
+    endLockout();
+    lockEl.classList.remove("open","wrong");
+    hintEl.textContent=defaultHint;
+    unlockBtn.removeAttribute("disabled");
+    document.getElementById("reveal").classList.remove("show");
+    for(var i=0;i<cfg.length;i++){current[i]=0;renderDial(i);}
+    showIntro();
+  }
+  document.getElementById("relock").addEventListener("click",relock);
+
+  /* ---------- 復古寶箱 ---------- */
+  var intro=document.getElementById("intro");
+  function showIntro(){
+    // 回到關著的寶箱開場
+    intro.classList.remove("hide","fade","opening","success");
+  }
+  // 輕觸：箱子不開，只淡出進到鎖的畫面
+  function enterLock(){
+    if(intro.classList.contains("success"))return;          // 成功畫面時不反應
+    if(intro.classList.contains("fade")||intro.classList.contains("hide"))return;
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(reduce){ intro.classList.add("hide"); return; }
+    intro.classList.add("fade");
+    setTimeout(function(){ intro.classList.add("hide"); }, 420);
+  }
+  intro.addEventListener("click",enterLock);
+
+  // 成功解鎖後：寶箱重新出現並開蓋，再翻出紙條
+  function chestReveal(){
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    intro.classList.remove("hide","fade","opening");
+    intro.classList.add("success");      // 顯示關著的箱子（無提示、無浮動）
+    if(reduce){ intro.classList.add("opening"); showReveal(); return; }
+    void intro.offsetWidth;              // 強制 reflow，讓接著的開蓋有過渡
+    setTimeout(function(){ intro.classList.add("opening"); creak(); }, 80);
+    setTimeout(showReveal, 900);
+  }
+
+  /* ---------- 道具揭示 ---------- */
+  var revealEl=document.getElementById("reveal");
+  var paperHolder=document.getElementById("paperHolder");
+  var captionEl=document.getElementById("caption");
+  function showReveal(){
+    paperHolder.innerHTML="";
+    if(cfg.image){
+      var img=document.createElement("img");
+      img.className="paper-img"; img.src=cfg.image; img.alt="道具";
+      img.addEventListener("click",function(){openLightbox(cfg.image);});
+      paperHolder.appendChild(img);
+      paperHolder.style.cursor="zoom-in";
+    }else{
+      paperHolder.style.cursor="default";
+      var e=document.createElement("div");
+      e.className="paper-empty";
+      e.textContent="尚未設定道具圖片。\n請長按右上角齒輪進入後台上傳。";
+      paperHolder.appendChild(e);
+    }
+    captionEl.textContent=cfg.caption||"";
+    captionEl.style.display=cfg.caption?"block":"none";
+    revealEl.classList.add("show");
+  }
+  document.getElementById("closeReveal").addEventListener("click",function(){
+    revealEl.classList.remove("show");
+    relock();   // 收起後回到關著的寶箱，準備下一組
+  });
+
+  /* ---------- 全螢幕看圖 ---------- */
+  var lightbox=document.getElementById("lightbox");
+  var lightboxImg=document.getElementById("lightboxImg");
+  function openLightbox(src){ lightboxImg.src=src; lightbox.classList.add("show"); }
+  lightbox.addEventListener("click",function(){ lightbox.classList.remove("show"); });
+
+  /* ---------- 齒輪長按 → 後台密碼 ---------- */
+  var gear=document.getElementById("gear");
+  var holdTimer=null;
+  function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(function(){openGate("admin");},600); }
+  function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
+  gear.addEventListener("pointerdown",function(e){e.preventDefault();startHold();});
+  gear.addEventListener("pointerup",cancelHold);
+  gear.addEventListener("pointerleave",cancelHold);
+  gear.addEventListener("pointercancel",cancelHold);
+
+  /* ---------- 密碼框（後台 / 原始碼 兩用） ---------- */
+  var gate=document.getElementById("gate");
+  var gateBox=document.getElementById("gateBox");
+  var gateInput=document.getElementById("gateInput");
+  var gateErr=document.getElementById("gateErr");
+  var gateTitle=document.getElementById("gateTitle");
+  var gateSub=document.getElementById("gateSub");
+  var gateMode="admin";
+  function openGate(){
+    gateTitle.textContent="後台密碼"; gateSub.textContent="請輸入密碼以進入設定";
+    gateErr.textContent=""; gateInput.value="";
+    gate.classList.add("show");
+    setTimeout(function(){ try{gateInput.focus();}catch(e){} }, 60);
+  }
+  function closeGate(){ gate.classList.remove("show"); }
+  function tryGate(){
+    if(gateInput.value===cfg.adminPass){ closeGate(); openAdmin(); }
+    else{
+      gateErr.textContent="密碼錯誤";
+      gateBox.classList.remove("shake"); void gateBox.offsetWidth; gateBox.classList.add("shake");
+      gateInput.value=""; try{gateInput.focus();}catch(e){}
+    }
+  }
+  document.getElementById("gateOk").addEventListener("click",tryGate);
+  document.getElementById("gateCancel").addEventListener("click",closeGate);
+  gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
+
+  /* ---------- 後台 ---------- */
+  var admin=document.getElementById("admin");
+  var lenSeg=document.getElementById("lenSeg");
+  var dialEditor=document.getElementById("dialEditor");
+  var fileInput=document.getElementById("fileInput");
+  var urlInput=document.getElementById("urlInput");
+  var capInput=document.getElementById("capInput");
+  var previewBox=document.getElementById("previewBox");
+  var previewImg=document.getElementById("previewImg");
+  var soundSwitch=document.getElementById("soundSwitch");
+  var adminPassInput=document.getElementById("adminPassInput");
+
+  var draft; // 編輯中的暫存
+
+  function openAdmin(){
+    cancelHold();
+    draft={
+      length:cfg.length,
+      dials:cfg.dials.map(function(d){return {type:d.type,custom:d.custom,ans:d.ans};}),
+      image:cfg.image, caption:cfg.caption, sound:cfg.sound, adminPass:cfg.adminPass
+    };
+    renderAdmin();
+    admin.classList.add("show");
+  }
+  function normDialAns(d){
+    var set=dialChars(d);
+    var ans=(d.ans==null?"":String(d.ans));
+    if(d.type!=="custom")ans=ans.toUpperCase();
+    if(set.indexOf(ans)<0)ans=set[0];
+    d.ans=ans;
+  }
+  function fillAns(sel,d){
+    var set=dialChars(d); sel.innerHTML="";
+    for(var k=0;k<set.length;k++){
+      var o=document.createElement("option"); o.value=set[k]; o.textContent=set[k]; sel.appendChild(o);
+    }
+    if(set.indexOf(d.ans)<0)d.ans=set[0];
+    sel.value=d.ans;
+  }
+  function buildDialCard(i){
+    var d=draft.dials[i];
+    var card=document.createElement("div");
+    card.className="dcard"+(d.type==="custom"?" is-custom":"");
+    card.innerHTML=
+      '<div class="dtitle">轉盤 '+(i+1)+'</div>'+
+      '<div class="drow">'+
+        '<div class="dcol type"><span>類型</span>'+
+          '<select class="dsel jtype">'+
+            '<option value="num">數字</option>'+
+            '<option value="alpha">英文</option>'+
+            '<option value="alphanum">數字+英文</option>'+
+            '<option value="custom">自定</option>'+
+          '</select></div>'+
+        '<div class="dcol grow custom-col"><span>要顯示的字</span>'+
+          '<input class="dcustom jcustom" placeholder="例如 ACGT 或 ★●▲ 或 東西南北" autocomplete="off" spellcheck="false"></div>'+
+        '<div class="dcol ans"><span>答案</span>'+
+          '<select class="dsel ans-sel jans"></select></div>'+
+      '</div>';
+    var typeSel=card.querySelector(".jtype");
+    var customInp=card.querySelector(".jcustom");
+    var ansSel=card.querySelector(".jans");
+    typeSel.value=d.type;
+    customInp.value=d.custom||"";
+    fillAns(ansSel,d);
+    typeSel.addEventListener("change",function(){
+      d.type=typeSel.value;
+      card.classList.toggle("is-custom", d.type==="custom");
+      normDialAns(d); fillAns(ansSel,d);
+    });
+    customInp.addEventListener("input",function(){
+      d.custom=customInp.value; normDialAns(d); fillAns(ansSel,d);
+    });
+    ansSel.addEventListener("change",function(){ d.ans=ansSel.value; });
+    return card;
+  }
+  function renderAdmin(){
+    Array.prototype.forEach.call(lenSeg.children,function(b){
+      b.classList.toggle("on", parseInt(b.dataset.len,10)===draft.length);
+    });
+    dialEditor.innerHTML="";
+    for(var i=0;i<draft.length;i++){ dialEditor.appendChild(buildDialCard(i)); }
+    if(draft.image){ previewImg.src=draft.image; previewBox.classList.add("show"); }
+    else previewBox.classList.remove("show");
+    urlInput.value=(draft.image&&draft.image.indexOf("data:")!==0)?draft.image:"";
+    capInput.value=draft.caption||"";
+    soundSwitch.classList.toggle("on",!!draft.sound);
+    adminPassInput.value=draft.adminPass||"";
+  }
+  lenSeg.addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    draft.length=parseInt(b.dataset.len,10);
+    while(draft.dials.length<draft.length) draft.dials.push(makeDial("0"));
+    draft.dials.length=draft.length;
+    renderAdmin();
+  });
+  fileInput.addEventListener("change",function(){
+    var f=fileInput.files[0]; if(!f)return;
+    var r=new FileReader();
+    r.onload=function(){ draft.image=r.result; urlInput.value=""; previewImg.src=r.result; previewBox.classList.add("show"); };
+    r.readAsDataURL(f);
+  });
+  urlInput.addEventListener("input",function(){
+    var v=urlInput.value.trim();
+    if(v){ draft.image=v; previewImg.src=v; previewBox.classList.add("show"); }
+    else if(!fileInput.files.length){ draft.image=""; previewBox.classList.remove("show"); }
+  });
+  capInput.addEventListener("input",function(){ draft.caption=capInput.value; });
+  soundSwitch.addEventListener("click",function(){
+    draft.sound=!draft.sound; soundSwitch.classList.toggle("on",draft.sound);
+  });
+  adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
+
+  function commit(){
+    cfg.length=draft.length;
+    cfg.dials=draft.dials.map(function(d){return {type:d.type,custom:d.custom,ans:d.ans};});
+    cfg.image=draft.image;
+    cfg.caption=draft.caption;
+    cfg.sound=draft.sound;
+    cfg.adminPass=(draft.adminPass && draft.adminPass.length)?draft.adminPass:"1234";
+    normalize(cfg);
+    save(cfg);
+    buildDials();
+    relock();
+  }
+  document.getElementById("saveBtn").addEventListener("click",function(){
+    commit();
+    admin.classList.remove("show");
+    toast("已儲存");
+  });
+  document.getElementById("previewFront").addEventListener("click",function(){
+    commit();
+    admin.classList.remove("show");
+  });
+
+  var toastEl=document.getElementById("savedToast"),toastT=null;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
+
+  /* ---------- 啟動 ---------- */
+  buildDials();
+})();
+</script>
+</body>
+</html>

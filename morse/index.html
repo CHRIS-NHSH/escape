@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>摩斯密碼燈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1c2128; --slate2:#161a20;
+    --graphite:#2a3139; --graphite-lo:#1f242b;
+    --brass:#d9b878; --brass-mid:#b8935a; --brass-lo:#8a6d3f;
+    --amber:#ffce78;
+    --txt:#e7e3da; --txt-dim:#9aa1a9;
+    --line:rgba(255,255,255,.08);
+    --paper:#f4ead8;
+    --display:"Chakra Petch", system-ui, sans-serif;
+    --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:var(--cjk);color:var(--txt);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+    background:radial-gradient(120% 90% at 50% 16%, #29313a 0%, var(--slate) 44%, var(--slate2) 100%);
+  }
+  .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:6px}
+
+  /* 齒輪（後台） */
+  .gear{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--txt-dim);background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;z-index:40;transition:color .2s,background .2s}
+  .gear:active{color:var(--brass)}
+  .gear svg{width:24px;height:24px}
+  .gear .ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--brass);clip-path:inset(0 0 100% 0);opacity:.9}
+  .gear.holding .ring{clip-path:inset(0 0 0 0);transition:clip-path .6s linear}
+
+  .brandline{font-family:var(--display);font-weight:600;letter-spacing:3px;font-size:12px;color:var(--brass-mid);text-transform:uppercase;margin-bottom:8px}
+
+  /* 信號燈 */
+  .lamp{position:relative;width:230px;height:230px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 30% 24%, #4a3f29, #241f15);
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.75), inset 0 2px 0 rgba(255,255,255,.1);}
+  .lamp::before{content:"";position:absolute;inset:12px;border-radius:50%;
+    background:linear-gradient(160deg,var(--brass),var(--brass-lo));box-shadow:inset 0 2px 4px rgba(255,255,255,.35), inset 0 -4px 8px rgba(0,0,0,.35);}
+  .lens{position:relative;z-index:1;width:158px;height:158px;border-radius:50%;
+    background:radial-gradient(circle at 40% 34%, #2c3543, #10141a);
+    box-shadow:inset 0 8px 18px rgba(0,0,0,.75), inset 0 -4px 10px rgba(0,0,0,.5);
+    transition:background .05s linear, box-shadow .05s linear;}
+  .lamp.on .lens{
+    background:radial-gradient(circle at 45% 40%, #fff8e6, var(--amber) 46%, #e8a93c 82%);
+    box-shadow:0 0 42px 16px rgba(255,206,120,.7), 0 0 100px 34px rgba(255,190,90,.35), inset 0 0 22px rgba(255,255,255,.65);}
+  .txbadge{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+    font-family:var(--display);font-size:11px;letter-spacing:2px;color:#1c1206;background:var(--brass);
+    padding:4px 12px;border-radius:999px;opacity:0;transition:opacity .2s;text-transform:uppercase;white-space:nowrap}
+  .lamp.tx .txbadge{opacity:1}
+
+  .hint{margin-top:30px;min-height:20px;color:var(--txt-dim);font-size:14px;letter-spacing:1px;text-align:center;padding:0 16px}
+
+  .controls{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+  .pill{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);
+    padding:11px 22px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .pill:active{background:rgba(255,255,255,.1)}
+  .pill svg{width:16px;height:16px;color:var(--brass)}
+
+  /* 作答 */
+  .answer{display:flex;gap:10px;margin-top:18px;width:100%;max-width:360px}
+  .answer input{flex:1;height:52px;text-align:center;font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:4px;text-transform:uppercase;
+    background:#1c2026;border:1px solid var(--line);border-radius:12px;color:var(--txt)}
+  .answer input:focus{outline:none;border-color:var(--brass-mid)}
+  .answer .submit{flex:none;border:none;border-radius:12px;padding:0 24px;font-family:var(--cjk);font-weight:700;font-size:15px;cursor:pointer;
+    background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .answer .submit:active{transform:translateY(1px)}
+  .lamp.solved-pulse{animation:none}
+  .wrong{animation:shake .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  /* 揭示 */
+  .reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(120% 100% at 50% 40%, rgba(255,206,120,.14), rgba(0,0,0,.8) 60%);backdrop-filter:blur(3px);padding:24px}
+  .reveal.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .case{position:relative;max-width:520px;width:100%;border-radius:20px;padding:20px;text-align:center;
+    background:linear-gradient(180deg,#3a2e1a,#241c10);border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.8);transform:translateY(14px) scale(.96);opacity:0}
+  .reveal.show .case{animation:rise .5s cubic-bezier(.2,.9,.3,1.2) .08s forwards}
+  @keyframes rise{to{transform:none;opacity:1}}
+  .case .tag{font-family:var(--display);letter-spacing:3px;font-size:11px;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
+  .paper{width:100%;border-radius:8px;background:var(--paper);overflow:hidden}
+  .paper img{width:100%;display:block;cursor:zoom-in}
+  .paper-empty{min-height:140px;display:flex;align-items:center;justify-content:center;color:#7a6a4f;font-size:15px;padding:28px;line-height:1.7}
+  .caption{margin-top:14px;color:#f7e9cf;font-size:16px;line-height:1.7;white-space:pre-wrap}
+  .case .close{margin:16px auto 2px;display:block;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff;padding:10px 26px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+
+  .lightbox{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);padding:12px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+  /* 對照表 */
+  .chart{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:rgba(8,10,13,.85);backdrop-filter:blur(3px);padding:20px}
+  .chart.show{display:flex}
+  .chart-box{width:100%;max-width:520px;max-height:84vh;overflow:auto;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .chart-box h3{font-family:var(--display);letter-spacing:2px;font-size:15px;color:#fff;margin:0 0 16px;text-align:center}
+  .chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .ci{display:flex;align-items:center;gap:8px;background:#13171c;border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+  .ci b{font-family:var(--display);color:var(--brass);font-size:16px;width:16px}
+  .ci span{font-family:var(--display);color:var(--txt-dim);font-size:14px;letter-spacing:2px}
+  .chart-close{margin:18px auto 0;display:block;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:10px 26px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+
+  /* 密碼框 */
+  .gate{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);backdrop-filter:blur(3px)}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:320px;padding:24px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .gate-title{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:16px;text-align:center}
+  .gate-sub{color:var(--txt-dim);font-size:12px;text-align:center;margin:6px 0 16px}
+  .gate-input{width:100%;height:54px;text-align:center;font-size:22px;letter-spacing:6px;font-family:var(--display);background:#13171c;border:1px solid var(--line);border-radius:12px;color:var(--brass)}
+  .gate-input:focus{outline:none;border-color:var(--brass-mid)}
+  .gate-err{height:18px;color:#e8857a;font-size:13px;text-align:center;margin:9px 0 3px}
+  .gate-actions{display:flex;gap:10px}
+  .gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
+
+  /* 後台 */
+  .admin{position:fixed;inset:0;z-index:50;display:none;background:linear-gradient(180deg,#13171c,#0e1115);overflow:auto;padding:26px 20px 60px}
+  .admin.show{display:block}
+  .admin-wrap{max-width:560px;margin:0 auto}
+  .admin h1{font-family:var(--display);font-weight:700;letter-spacing:1px;font-size:22px;margin:6px 0 4px;color:#fff}
+  .admin .sub{color:var(--txt-dim);font-size:13px;margin-bottom:24px}
+  .field{margin-bottom:24px}
+  .field>label{display:block;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:10px}
+  .field .desc{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .url-input{width:100%;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:15px;font-family:var(--cjk)}
+  .url-input:focus{outline:none;border-color:var(--brass-mid)}
+  textarea.url-input{min-height:70px;resize:vertical}
+  .msg-input{letter-spacing:3px;text-transform:uppercase;font-family:var(--display);font-weight:600}
+  .seg{display:inline-flex;background:#1c2026;border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;flex-wrap:wrap}
+  .seg button{border:none;background:transparent;color:var(--txt-dim);padding:9px 16px;border-radius:8px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .seg button.on{background:var(--brass-mid);color:#1c1206;font-weight:600}
+  .toggle{display:flex;align-items:center;gap:12px}
+  .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
+  .switch.on{background:var(--brass-mid)}
+  .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+  .switch.on i{left:25px}
+  .filebtn{display:inline-flex;align-items:center;gap:8px;background:#1c2026;border:1px solid var(--line);color:var(--txt);padding:12px 18px;border-radius:11px;font-size:14px;cursor:pointer}
+  input[type=file]{display:none}
+  .preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#15181d;display:none}
+  .preview.show{display:block}
+  .preview img{width:100%;border-radius:8px;display:block}
+  .mini-morse{margin-top:10px;font-family:var(--display);color:var(--brass);letter-spacing:2px;font-size:15px;word-break:break-all;min-height:20px}
+  .actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line);z-index:62}
+  .saved.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="gear" id="gear" title="長按進入後台">
+  <span class="ring"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</div>
+
+<div class="stage" id="stage">
+  <div class="brandline">SIGNAL LAMP</div>
+  <div class="lamp" id="lamp">
+    <div class="lens"></div>
+    <div class="txbadge">傳訊中</div>
+  </div>
+  <div class="hint" id="hint">觀察燈號，解出摩斯密碼後輸入答案</div>
+  <div class="controls">
+    <button class="pill" id="playBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg><span id="playLabel">播放</span></button>
+    <button class="pill" id="chartBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>對照表</button>
+  </div>
+  <div class="answer">
+    <input id="ans" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="輸入答案">
+    <button class="submit" id="submitBtn">確認</button>
+  </div>
+</div>
+
+<!-- 揭示 -->
+<div class="reveal" id="reveal">
+  <div class="case">
+    <div class="tag">DECODED · 解碼成功</div>
+    <div class="paper" id="paperHolder"></div>
+    <div class="caption" id="caption"></div>
+    <button class="close" id="closeReveal">收起</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt="放大"></div>
+
+<!-- 對照表 -->
+<div class="chart" id="chart">
+  <div class="chart-box">
+    <h3>摩斯密碼對照表</h3>
+    <div class="chart-grid" id="chartGrid"></div>
+    <button class="chart-close" id="chartClose">關閉</button>
+  </div>
+</div>
+
+<!-- 後台密碼 -->
+<div class="gate" id="gate">
+  <div class="gate-box" id="gateBox">
+    <div class="gate-title">後台密碼</div>
+    <div class="gate-sub">請輸入密碼以進入設定</div>
+    <input class="gate-input" id="gateInput" type="password" autocomplete="off" placeholder="••••">
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-actions">
+      <button class="gate-cancel" id="gateCancel">取消</button>
+      <button class="gate-ok" id="gateOk">進入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 後台 -->
+<div class="admin" id="admin">
+  <div class="admin-wrap">
+    <h1>後台設定</h1>
+    <div class="sub">設定要閃出的訊息與播放方式，玩家不會看到這個畫面。</div>
+
+    <div class="field">
+      <label>摩斯訊息（也是玩家要輸入的答案）</label>
+      <input class="url-input msg-input" id="msgInput" autocomplete="off" placeholder="例如 SOS 或 RED 42">
+      <div class="mini-morse" id="miniMorse"></div>
+      <div class="desc">只支援英文 A–Z 與數字 0–9，空白代表斷字。無法轉成摩斯的字會被忽略。</div>
+    </div>
+
+    <div class="field">
+      <label>播放方式</label>
+      <div class="seg" id="modeSeg">
+        <button data-m="both">閃光＋聲音</button>
+        <button data-m="light">只閃光</button>
+        <button data-m="sound">只聲音</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>速度</label>
+      <div class="seg" id="speedSeg">
+        <button data-u="220">慢</button>
+        <button data-u="150">中</button>
+        <button data-u="90">快</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>自動循環播放</label>
+      <div class="toggle"><div class="switch" id="loopSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">持續重複發送訊號</span></div>
+    </div>
+
+    <div class="field">
+      <label>顯示「對照表」按鈕</label>
+      <div class="toggle"><div class="switch" id="chartSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">提供摩斯對照表給玩家</span></div>
+    </div>
+
+    <div class="field">
+      <label>成功後說明文字（選填）</label>
+      <textarea class="url-input" id="capInput" placeholder="例如：把這個字交給關主。"></textarea>
+    </div>
+
+    <div class="field">
+      <label>成功後圖片（選填）</label>
+      <label class="filebtn" for="fileInput">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        上傳圖片
+      </label>
+      <input type="file" id="fileInput" accept="image/*">
+      <input class="url-input" id="urlInput" placeholder="或貼上圖片網址 https://..." style="margin-top:10px">
+      <div class="preview" id="previewBox"><img id="previewImg" alt="預覽"></div>
+    </div>
+
+    <div class="field">
+      <label>後台密碼</label>
+      <input class="url-input" id="adminPassInput" type="text" autocomplete="off" placeholder="進入後台用的密碼">
+      <div class="desc">下次長按右上角齒輪進入後台時要輸入這組密碼。留空會自動回復預設。</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="previewBtn">預覽前台</button>
+      <button class="btn primary" id="saveBtn">儲存並返回</button>
+    </div>
+  </div>
+</div>
+
+<div class="saved" id="toast">已儲存</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MORSE={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",M:"--",
+    N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..",
+    "0":"-----","1":".----","2":"..---","3":"...--","4":"....-","5":".....","6":"-....","7":"--...","8":"---..","9":"----."};
+
+  /* ===== 儲存 ===== */
+  var KEY="morse.config.v1", mem=null;
+  function load(){ try{var s=localStorage.getItem(KEY); if(s)return JSON.parse(s);}catch(e){} return mem; }
+  function save(c){ mem=c; try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){} }
+
+  var cfg = load() || { message:"SOS", mode:"both", unit:150, loop:true, showChart:true, caption:"", image:"", adminPass:"1234" };
+  function normalize(c){
+    c.message=(c.message==null?"":String(c.message)).toUpperCase();
+    if(["both","light","sound"].indexOf(c.mode)<0)c.mode="both";
+    c.unit=[90,150,220].indexOf(c.unit)>=0?c.unit:150;
+    c.loop=c.loop!==false; c.showChart=c.showChart!==false;
+    c.caption=c.caption||""; c.image=c.image||"";
+    if(typeof c.adminPass!=="string"||c.adminPass==="")c.adminPass="1234";
+  }
+  normalize(cfg);
+
+  /* ===== 音效 ===== */
+  var actx=null;
+  function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return actx; }
+  function beep(dur){
+    var c=ac(); if(!c)return;
+    var o=c.createOscillator(), g=c.createGain();
+    o.type="sine"; o.frequency.value=620; g.gain.value=0.0001;
+    o.connect(g); g.connect(c.destination);
+    var t=c.currentTime;
+    g.gain.linearRampToValueAtTime(0.09, t+0.01);
+    g.gain.setValueAtTime(0.09, t+Math.max(0.02,dur/1000-0.02));
+    g.gain.linearRampToValueAtTime(0.0001, t+dur/1000);
+    o.start(t); o.stop(t+dur/1000+0.02);
+  }
+  function buzz(){ var c=ac(); if(!c)return; var o=c.createOscillator(),g=c.createGain();o.type="square";o.frequency.value=90;g.gain.value=0.07;o.connect(g);g.connect(c.destination);var t=c.currentTime;g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.start(t);o.stop(t+0.25); }
+
+  /* ===== 播放引擎 ===== */
+  var lamp=document.getElementById("lamp");
+  var hintEl=document.getElementById("hint");
+  var playLabel=document.getElementById("playLabel");
+  var timeline=[], tlIdx=0, tlTimer=null, playing=false;
+
+  function showLight(){ return cfg.mode==="light"||cfg.mode==="both"; }
+  function playSound(){ return cfg.mode==="sound"||cfg.mode==="both"; }
+
+  function buildTimeline(){
+    var u=cfg.unit, segs=[];
+    var words=cfg.message.toUpperCase().split(/\s+/).filter(Boolean);
+    words.forEach(function(word,wi){
+      var letters=word.split("");
+      letters.forEach(function(ch,li){
+        var code=MORSE[ch]; if(!code)return;
+        for(var k=0;k<code.length;k++){
+          segs.push({on:true,dur:(code[k]==="-"?3*u:u)});
+          if(k<code.length-1) segs.push({on:false,dur:u});
+        }
+        if(li<letters.length-1) segs.push({on:false,dur:3*u});
+      });
+      if(wi<words.length-1) segs.push({on:false,dur:7*u});
+    });
+    return segs;
+  }
+  function lampOnOff(on){
+    if(on && showLight()) lamp.classList.add("on"); else lamp.classList.remove("on");
+  }
+  function tlStep(){
+    if(!playing)return;
+    if(tlIdx>=timeline.length){
+      lampOnOff(false);
+      if(cfg.loop){ tlTimer=setTimeout(function(){ tlIdx=0; tlStep(); }, 7*cfg.unit); }
+      else { stopPlay(); }
+      return;
+    }
+    var seg=timeline[tlIdx++];
+    lampOnOff(seg.on);
+    if(seg.on && playSound()) beep(seg.dur);
+    tlTimer=setTimeout(tlStep, seg.dur);
+  }
+  function startPlay(){
+    ac(); // 解鎖音訊
+    stopPlay();
+    timeline=buildTimeline();
+    if(!timeline.length){ hintEl.textContent="尚未設定訊息，請長按右上角齒輪設定。"; return; }
+    tlIdx=0; playing=true; lamp.classList.add("tx"); tlStep();
+  }
+  function stopPlay(){
+    playing=false; clearTimeout(tlTimer); lamp.classList.remove("on","tx");
+  }
+  function refreshPlayLabel(){ playLabel.textContent = cfg.loop ? "重播" : "播放"; }
+
+  document.getElementById("playBtn").addEventListener("click",startPlay);
+
+  /* ===== 對照表 ===== */
+  var chart=document.getElementById("chart"), chartGrid=document.getElementById("chartGrid"), chartBtn=document.getElementById("chartBtn");
+  (function(){
+    var html="";
+    Object.keys(MORSE).forEach(function(k){ html+='<div class="ci"><b>'+k+'</b><span>'+MORSE[k].replace(/\./g,"·").replace(/-/g,"—")+'</span></div>'; });
+    chartGrid.innerHTML=html;
+  })();
+  chartBtn.addEventListener("click",function(){ chart.classList.add("show"); });
+  document.getElementById("chartClose").addEventListener("click",function(){ chart.classList.remove("show"); });
+  function refreshChartBtn(){ chartBtn.style.display = cfg.showChart ? "inline-flex" : "none"; }
+
+  /* ===== 作答 ===== */
+  var ans=document.getElementById("ans");
+  function norm(s){ return String(s||"").toUpperCase().replace(/\s+/g," ").trim(); }
+  function submit(){
+    if(!norm(ans.value)){ ans.focus(); return; }
+    if(norm(ans.value)===norm(cfg.message)){
+      stopPlay(); showReveal();
+    }else{
+      buzz();
+      ans.classList.remove("wrong"); void ans.offsetWidth; ans.classList.add("wrong");
+      hintEl.textContent="不對，再聽／看一次訊號";
+      if(navigator.vibrate){ try{navigator.vibrate(120);}catch(e){} }
+    }
+  }
+  document.getElementById("submitBtn").addEventListener("click",submit);
+  ans.addEventListener("keydown",function(e){ if(e.key==="Enter")submit(); });
+
+  /* ===== 揭示 ===== */
+  var reveal=document.getElementById("reveal"), paperHolder=document.getElementById("paperHolder"), captionEl=document.getElementById("caption");
+  function showReveal(){
+    paperHolder.innerHTML="";
+    if(cfg.image){
+      paperHolder.style.display="block";
+      var img=document.createElement("img"); img.src=cfg.image; img.alt="線索";
+      img.addEventListener("click",function(){ openLightbox(cfg.image); });
+      paperHolder.appendChild(img);
+    }else if(cfg.caption){
+      paperHolder.style.display="none";
+    }else{
+      paperHolder.style.display="block";
+      var e=document.createElement("div"); e.className="paper-empty"; e.textContent="解碼成功！"; paperHolder.appendChild(e);
+    }
+    captionEl.textContent=cfg.caption||"";
+    captionEl.style.display=cfg.caption?"block":"none";
+    reveal.classList.add("show");
+  }
+  document.getElementById("closeReveal").addEventListener("click",function(){
+    reveal.classList.remove("show");
+    ans.value=""; hintEl.textContent="觀察燈號，解出摩斯密碼後輸入答案";
+    if(cfg.loop) startPlay();
+  });
+  var lightbox=document.getElementById("lightbox"), lightboxImg=document.getElementById("lightboxImg");
+  function openLightbox(src){ lightboxImg.src=src; lightbox.classList.add("show"); }
+  lightbox.addEventListener("click",function(){ lightbox.classList.remove("show"); });
+
+  /* ===== 齒輪長按 → 後台 ===== */
+  var gear=document.getElementById("gear"), holdTimer=null;
+  function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(openGate,600); }
+  function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
+  gear.addEventListener("pointerdown",function(e){e.preventDefault();startHold();});
+  gear.addEventListener("pointerup",cancelHold);
+  gear.addEventListener("pointerleave",cancelHold);
+  gear.addEventListener("pointercancel",cancelHold);
+
+  /* ===== 密碼框 ===== */
+  var gate=document.getElementById("gate"), gateBox=document.getElementById("gateBox"), gateInput=document.getElementById("gateInput"), gateErr=document.getElementById("gateErr");
+  function openGate(){ cancelHold(); gateErr.textContent=""; gateInput.value=""; gate.classList.add("show"); setTimeout(function(){try{gateInput.focus();}catch(e){}},60); }
+  function closeGate(){ gate.classList.remove("show"); }
+  function tryGate(){
+    if(gateInput.value===cfg.adminPass){ closeGate(); openAdmin(); }
+    else{ gateErr.textContent="密碼錯誤"; gateBox.classList.remove("wrong"); void gateBox.offsetWidth; gateBox.classList.add("wrong"); gateInput.value=""; try{gateInput.focus();}catch(e){} }
+  }
+  document.getElementById("gateOk").addEventListener("click",tryGate);
+  document.getElementById("gateCancel").addEventListener("click",closeGate);
+  gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
+
+  /* ===== 後台 ===== */
+  var admin=document.getElementById("admin");
+  var msgInput=document.getElementById("msgInput"), miniMorse=document.getElementById("miniMorse");
+  var modeSeg=document.getElementById("modeSeg"), speedSeg=document.getElementById("speedSeg");
+  var loopSwitch=document.getElementById("loopSwitch"), chartSwitch=document.getElementById("chartSwitch");
+  var capInput=document.getElementById("capInput"), fileInput=document.getElementById("fileInput"), urlInput=document.getElementById("urlInput");
+  var previewBox=document.getElementById("previewBox"), previewImg=document.getElementById("previewImg"), adminPassInput=document.getElementById("adminPassInput");
+  var draft=null;
+
+  function toMorse(s){
+    return String(s||"").toUpperCase().split("").map(function(ch){
+      if(ch===" ")return "/";
+      return MORSE[ch]? MORSE[ch].replace(/\./g,"·").replace(/-/g,"—") : "";
+    }).filter(Boolean).join(" ");
+  }
+  function openAdmin(){
+    draft={ message:cfg.message, mode:cfg.mode, unit:cfg.unit, loop:cfg.loop, showChart:cfg.showChart, caption:cfg.caption, image:cfg.image, adminPass:cfg.adminPass };
+    renderAdmin();
+    admin.classList.add("show");
+  }
+  function renderAdmin(){
+    msgInput.value=draft.message; miniMorse.textContent=toMorse(draft.message);
+    Array.prototype.forEach.call(modeSeg.children,function(b){ b.classList.toggle("on",b.dataset.m===draft.mode); });
+    Array.prototype.forEach.call(speedSeg.children,function(b){ b.classList.toggle("on",parseInt(b.dataset.u,10)===draft.unit); });
+    loopSwitch.classList.toggle("on",!!draft.loop);
+    chartSwitch.classList.toggle("on",!!draft.showChart);
+    capInput.value=draft.caption||"";
+    if(draft.image){ previewImg.src=draft.image; previewBox.classList.add("show"); urlInput.value=(draft.image.indexOf("data:")!==0)?draft.image:""; }
+    else { previewBox.classList.remove("show"); urlInput.value=""; }
+    adminPassInput.value=draft.adminPass||"";
+  }
+  msgInput.addEventListener("input",function(){ draft.message=msgInput.value.toUpperCase(); msgInput.value=draft.message; miniMorse.textContent=toMorse(draft.message); });
+  modeSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.mode=b.dataset.m; renderAdmin(); });
+  speedSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.unit=parseInt(b.dataset.u,10); renderAdmin(); });
+  loopSwitch.addEventListener("click",function(){ draft.loop=!draft.loop; loopSwitch.classList.toggle("on",draft.loop); });
+  chartSwitch.addEventListener("click",function(){ draft.showChart=!draft.showChart; chartSwitch.classList.toggle("on",draft.showChart); });
+  capInput.addEventListener("input",function(){ draft.caption=capInput.value; });
+  fileInput.addEventListener("change",function(){ var f=fileInput.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ draft.image=r.result; urlInput.value=""; previewImg.src=r.result; previewBox.classList.add("show"); }; r.readAsDataURL(f); });
+  urlInput.addEventListener("input",function(){ var v=urlInput.value.trim(); if(v){ draft.image=v; previewImg.src=v; previewBox.classList.add("show"); } else if(!fileInput.files.length){ draft.image=""; previewBox.classList.remove("show"); } });
+  adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
+
+  function commit(){
+    cfg.message=draft.message; cfg.mode=draft.mode; cfg.unit=draft.unit; cfg.loop=draft.loop; cfg.showChart=draft.showChart;
+    cfg.caption=draft.caption; cfg.image=draft.image;
+    cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"1234";
+    normalize(cfg); save(cfg);
+    applyConfig();
+  }
+  document.getElementById("saveBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); toast("已儲存"); });
+  document.getElementById("previewBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); });
+
+  var toastEl=document.getElementById("toast"), toastT=null;
+  function toast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
+
+  /* ===== 套用設定並啟動 ===== */
+  function applyConfig(){
+    refreshPlayLabel(); refreshChartBtn();
+    reveal.classList.remove("show"); ans.value="";
+    hintEl.textContent="觀察燈號，解出摩斯密碼後輸入答案";
+    if(cfg.loop) startPlay(); else stopPlay();
+  }
+  applyConfig();
+})();
+</script>
+</body>
+</html>

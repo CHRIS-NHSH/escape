@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機關範例庫 · 校園密室道具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1c2128; --slate2:#161a20;
+    --graphite:#2a3139; --graphite-lo:#1f242b;
+    --brass:#d9b878; --brass-mid:#b8935a; --brass-lo:#8a6d3f;
+    --txt:#e7e3da; --txt-dim:#9aa1a9;
+    --line:rgba(255,255,255,.08);
+    --display:"Chakra Petch", system-ui, sans-serif;
+    --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--cjk);color:var(--txt);min-height:100vh;position:relative;
+    background:radial-gradient(120% 70% at 50% -10%, #29313a 0%, var(--slate) 45%, var(--slate2) 100%);
+  }
+  /* 解謎背景 */
+  .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .bg .grid{position:absolute;inset:0;opacity:.35;
+    background-image:linear-gradient(rgba(217,184,120,.05) 1px,transparent 1px),linear-gradient(90deg, rgba(217,184,120,.05) 1px,transparent 1px);
+    background-size:34px 34px;
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 0%, #000 35%, transparent 80%);
+    mask-image:radial-gradient(120% 90% at 50% 0%, #000 35%, transparent 80%);}
+  .bg .glyph{position:absolute;font-family:var(--display);color:var(--brass);opacity:.06;font-weight:600;user-select:none;animation:drift 22s ease-in-out infinite}
+  @keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(3deg)}}
+  .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:48px 22px 64px}
+
+  /* 齒輪（首頁後台） */
+  .gear{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--txt-dim);background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;z-index:40;transition:color .2s,background .2s}
+  .gear:active{color:var(--brass)}
+  .gear svg{width:24px;height:24px}
+  .gear .ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--brass);clip-path:inset(0 0 100% 0);opacity:.9}
+  .gear.holding .ring{clip-path:inset(0 0 0 0);transition:clip-path .6s linear}
+
+  /* 標頭 */
+  header{margin-bottom:34px}
+  .mark{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .mark .glyph2{width:46px;height:46px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#333b44,var(--graphite-lo));border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+  .mark .glyph2 svg{width:26px;height:26px;color:var(--brass)}
+  .mark .kicker{font-family:var(--display);font-weight:600;letter-spacing:3px;font-size:12px;color:var(--brass-mid);text-transform:uppercase}
+  .morse{display:flex;align-items:center;gap:7px;margin:0 0 16px 58px;height:14px}
+  .morse i{display:block;background:var(--brass-mid);border-radius:2px;height:4px;opacity:.7}
+  .morse i.dot{width:4px}.morse i.dash{width:13px}.morse i.sp{background:transparent;width:8px}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);letter-spacing:1px;margin:0 0 12px;line-height:1.1}
+  h1 .ch{display:inline-block;white-space:pre}
+  h1 .ch.scrambling{color:var(--brass-mid)}
+  .lede{color:var(--txt-dim);font-size:16px;line-height:1.75;max-width:60ch;margin:0}
+  .count{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:var(--display);font-size:13px;letter-spacing:1px;color:var(--txt-dim)}
+  .count b{color:var(--brass);font-weight:700}
+  .rule{height:1px;background:linear-gradient(90deg,var(--brass-lo),transparent);margin:26px 0 0}
+
+  /* 機關架 */
+  .shelf{margin-top:30px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(258px,1fr))}
+  .card{position:relative;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#2d343d,var(--graphite-lo));border:1px solid var(--line);border-radius:16px;padding:22px 20px 20px;
+    text-decoration:none;color:inherit;
+    box-shadow:0 20px 40px -24px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.05);
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    opacity:0;transform:translateY(14px);animation:rise .5s ease forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card::before,.card::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;opacity:.7;border-color:var(--brass-mid);border-style:solid}
+  .card::before{top:10px;left:10px;border-width:1.5px 0 0 1.5px;border-radius:3px 0 0 0}
+  .card::after{bottom:10px;right:10px;border-width:0 1.5px 1.5px 0;border-radius:0 0 3px 0}
+  a.card:hover{transform:translateY(-5px);border-color:rgba(217,184,120,.4);box-shadow:0 28px 50px -22px rgba(0,0,0,.8), 0 0 0 1px rgba(217,184,120,.15)}
+  a.card:focus-visible{outline:2px solid var(--brass);outline-offset:3px}
+  /* 卡片右上角：查看程式碼 */
+  .cardcode{position:absolute;top:11px;right:11px;width:34px;height:34px;border-radius:9px;z-index:4;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);color:var(--brass);transition:background .2s,border-color .2s}
+  .cardcode:hover{background:rgba(217,184,120,.16);border-color:rgba(217,184,120,.45)}
+  .cardcode svg{width:17px;height:17px}
+
+  .code{font-family:var(--display);font-weight:600;letter-spacing:2px;font-size:11px;color:var(--brass-mid);text-transform:uppercase;margin-bottom:14px}
+  .icon{width:54px;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+    background:radial-gradient(120% 120% at 30% 20%, #3a424c, #232a31);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  .icon svg{width:30px;height:30px;color:var(--brass)}
+  .card h2{font-family:var(--cjk);font-weight:700;font-size:19px;margin:0 0 8px}
+  .card p{color:var(--txt-dim);font-size:13.5px;line-height:1.7;margin:0 0 16px;flex:1}
+  .foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+  .tag{font-family:var(--display);font-size:11px;letter-spacing:1px;padding:5px 11px;border-radius:999px}
+  .tag.live{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206;font-weight:700}
+  .tag.soon{border:1px solid var(--line);color:var(--txt-dim)}
+  .go{font-family:var(--display);font-size:13px;letter-spacing:1px;color:var(--brass);display:flex;align-items:center;gap:6px}
+  a.card:hover .go{gap:10px}
+  .go svg{width:15px;height:15px}
+  .card.soon{opacity:0;animation:riseSoon .5s ease forwards;cursor:default}
+  @keyframes riseSoon{to{opacity:.5;transform:none}}
+  .card.soon .icon svg,.card.soon .code{color:var(--txt-dim)}
+
+  footer{margin-top:46px;color:var(--txt-dim);font-size:12.5px;line-height:1.7;text-align:center}
+  footer code{color:var(--brass-mid)}
+
+  /* 密碼框（後台 / 程式碼 兩用） */
+  .gate{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);backdrop-filter:blur(3px)}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:320px;padding:24px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .gate-title{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:16px;text-align:center}
+  .gate-sub{color:var(--txt-dim);font-size:12px;text-align:center;margin:6px 0 16px}
+  .gate-input{width:100%;height:54px;text-align:center;font-size:22px;letter-spacing:6px;font-family:var(--display);background:#13171c;border:1px solid var(--line);border-radius:12px;color:var(--brass)}
+  .gate-input:focus{outline:none;border-color:var(--brass-mid)}
+  .gate-err{height:18px;color:#e8857a;font-size:13px;text-align:center;margin:9px 0 3px}
+  .gate-actions{display:flex;gap:10px}
+  .gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .shake{animation:shake .35s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  /* 程式碼檢視 */
+  .codeview{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;background:#0e1115;padding:16px}
+  .codeview.show{display:flex}
+  .cv-box{flex:1;display:flex;flex-direction:column;max-width:900px;width:100%;margin:0 auto;min-height:0}
+  .cv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cv-head span{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:15px}
+  .cv-x{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:8px 18px;border-radius:10px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .cv-text{flex:1;min-height:0;width:100%;resize:none;background:#13171c;border:1px solid var(--line);border-radius:12px;color:#cdd3da;
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:12px;line-height:1.6;padding:14px;white-space:pre;overflow:auto}
+  .cv-text:focus{outline:none;border-color:var(--brass-mid)}
+  .cv-actions{display:flex;justify-content:flex-end;margin-top:12px}
+  .cv-actions .btn{flex:none;padding:13px 28px}
+
+  /* 首頁後台 */
+  .admin{position:fixed;inset:0;z-index:50;display:none;background:linear-gradient(180deg,#13171c,#0e1115);overflow:auto;padding:26px 20px 60px}
+  .admin.show{display:block}
+  .admin-wrap{max-width:620px;margin:0 auto}
+  .admin h1{font-family:var(--display);font-weight:700;letter-spacing:1px;font-size:22px;margin:6px 0 4px;color:#fff;animation:none}
+  .admin .sub{color:var(--txt-dim);font-size:13px;margin-bottom:24px}
+  .field{margin-bottom:24px}
+  .field>label{display:block;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:10px}
+  .field .desc{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .url-input{width:100%;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:14px;font-family:var(--cjk)}
+  .url-input:focus{outline:none;border-color:var(--brass-mid)}
+  textarea.url-input{min-height:64px;resize:vertical}
+  .seg{display:inline-flex;background:#1c2026;border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+  .seg button{border:none;background:transparent;color:var(--txt-dim);padding:8px 16px;border-radius:8px;font-family:var(--cjk);font-size:13px;cursor:pointer}
+  .seg button.on{background:var(--brass-mid);color:#1c1206;font-weight:600}
+  .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
+  .switch.on{background:var(--brass-mid)}
+  .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+  .switch.on i{left:25px}
+
+  .mcard{background:#1c2026;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .mcard .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .mcard .mhead .mttl{font-family:var(--display);font-weight:600;color:var(--brass-mid);letter-spacing:1px;font-size:12px}
+  .mcard .mtools{display:flex;gap:6px}
+  .miconbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#13171c;color:var(--txt-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .miconbtn:active{color:var(--brass)}
+  .miconbtn.del{color:#e8857a}
+  .mrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .mcol{display:flex;flex-direction:column;gap:5px}
+  .mcol>span{font-size:11px;color:var(--txt-dim)}
+  .mcol.grow{flex:1;min-width:150px}
+  .mini{background:#13171c;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:9px 11px;font-size:14px;font-family:var(--cjk);width:100%}
+  .mini:focus{outline:none;border-color:var(--brass-mid)}
+  .mshare{display:flex;align-items:center;gap:10px}
+  .addbtn{width:100%;border:1px dashed var(--line);background:rgba(255,255,255,.02);color:var(--brass);border-radius:12px;padding:13px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .addbtn:active{background:rgba(255,255,255,.05)}
+  .smallbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .smallbtns button{flex:1;min-width:130px;border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:11px;padding:11px;font-family:var(--cjk);font-size:13px;cursor:pointer}
+  .actions{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line);z-index:60}
+  .saved.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.card{opacity:1;transform:none}.card.soon{opacity:.5}}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"><div class="grid"></div></div>
+
+<!-- 首頁後台（長按進入） -->
+<div class="gear" id="gear" title="長按進入首頁後台">
+  <span class="ring"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="mark">
+      <span class="glyph2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M3 10v9a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-9"/><path d="M3 10V8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2"/>
+          <path d="M3 10h18"/><rect x="10" y="9" width="4" height="5" rx="1"/>
+        </svg>
+      </span>
+      <span class="kicker">Escape Room Toolkit</span>
+    </div>
+    <div class="morse" title="ESCAPE" aria-hidden="true">
+      <i class="dot"></i><i class="sp"></i>
+      <i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="sp"></i>
+      <i class="dash"></i><i class="dot"></i><i class="dash"></i><i class="dot"></i><i class="sp"></i>
+      <i class="dot"></i><i class="dash"></i><i class="sp"></i>
+      <i class="dot"></i><i class="dash"></i><i class="dash"></i><i class="dot"></i><i class="sp"></i>
+      <i class="dot"></i>
+    </div>
+    <h1 id="title">機關範例庫</h1>
+    <p class="lede">為校園密室與闖關活動做的互動道具。每個機關都是獨立的小程式，能直接在平板上操作；點進去就能玩，也能在後台改成你自己的題目。</p>
+    <div class="count"><b id="liveCount">0</b> 個可玩 · 持續增加中</div>
+    <div class="rule"></div>
+  </header>
+
+  <main class="shelf" id="shelf"></main>
+
+  <footer>
+    單一 HTML 檔、可離線使用 · 由 Neihu Senior High 課程活動而生<br>
+    長按右上角齒輪進入首頁後台，可新增／修改／刪除機關與設定程式碼分享。
+  </footer>
+</div>
+
+<!-- 密碼框 -->
+<div class="gate" id="gate">
+  <div class="gate-box" id="gateBox">
+    <div class="gate-title" id="gateTitle">後台密碼</div>
+    <div class="gate-sub" id="gateSub">請輸入密碼以進入設定</div>
+    <input class="gate-input" id="gateInput" type="password" autocomplete="off" placeholder="••••">
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-actions">
+      <button class="gate-cancel" id="gateCancel">取消</button>
+      <button class="gate-ok" id="gateOk">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 程式碼檢視 -->
+<div class="codeview" id="codeview">
+  <div class="cv-box">
+    <div class="cv-head">
+      <span id="cvTitle">原始碼</span>
+      <button class="cv-x" id="cvClose" type="button">關閉</button>
+    </div>
+    <textarea class="cv-text" id="cvText" readonly spellcheck="false"></textarea>
+    <div class="cv-actions">
+      <button class="btn primary" id="cvCopy" type="button">複製全部</button>
+    </div>
+  </div>
+</div>
+
+<!-- 首頁後台面板 -->
+<div class="admin" id="admin">
+  <div class="admin-wrap">
+    <h1>首頁後台</h1>
+    <div class="sub">管理機關清單與程式碼分享。設定會記在這台裝置的瀏覽器。</div>
+
+    <div class="field">
+      <label>機關清單</label>
+      <div id="mechEditor"></div>
+      <button class="addbtn" id="addMech" type="button">＋ 新增機關</button>
+      <div class="smallbtns">
+        <button id="exportBtn" type="button">匯出設定（複製）</button>
+        <button id="importBtn" type="button">匯入設定（貼上）</button>
+      </div>
+      <div class="desc">「分享程式碼」開啟後，該卡片右上角會出現 &lt;/&gt; 鈕，讓人輸入下方的程式碼密碼後查看此機關原始碼。要讓所有人看到清單變更，需把「匯出設定」貼進檔案的 <code>DEFAULT_HUB</code> 後重新上傳。</div>
+    </div>
+
+    <div class="field">
+      <label>程式碼密碼（提供給學生）</label>
+      <input class="url-input" id="codePassInput" type="text" autocomplete="off" placeholder="查看程式碼用的密碼">
+    </div>
+
+    <div class="field">
+      <label>首頁後台密碼（開發者）</label>
+      <input class="url-input" id="adminPassInput" type="text" autocomplete="off" placeholder="進入首頁後台用的密碼">
+      <div class="desc">與程式碼密碼分開，請勿外流。留空會自動回復預設。</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="cancelBtn">取消</button>
+      <button class="btn primary" id="saveBtn">儲存並返回</button>
+    </div>
+  </div>
+</div>
+
+<div class="saved" id="toast">已儲存</div>
+
+<script>
+/* 解謎背景 + 標題解碼 */
+(function(){
+  var bg=document.getElementById("bg");
+  var glyphs="ABCDEFGHJKLMNPRSTUVWXYZ0123456789·—⊕✶◇△□※".split("");
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var n=reduce?10:18;
+  for(var i=0;i<n;i++){
+    var s=document.createElement("span");
+    s.className="glyph"; s.textContent=glyphs[(Math.random()*glyphs.length)|0];
+    s.style.left=(Math.random()*96)+"%"; s.style.top=(Math.random()*100)+"%";
+    s.style.fontSize=(14+Math.random()*40)+"px"; s.style.animationDelay=(-Math.random()*22)+"s";
+    if(reduce)s.style.animation="none";
+    bg.appendChild(s);
+  }
+  var el=document.getElementById("title"), target=el.textContent;
+  var pool="密碼鎖機關解謎暗號線索寶箱闖關▣◆◇△※#&%".split("");
+  var chars=target.split(""); el.textContent="";
+  var spans=chars.map(function(c){
+    var sp=document.createElement("span");
+    sp.className="ch"+(c===" "?"":" scrambling");
+    sp.textContent=c===" "?" ":pool[(Math.random()*pool.length)|0];
+    el.appendChild(sp); return {sp:sp,target:c,locked:c===" "};
+  });
+  if(reduce){ spans.forEach(function(o){o.sp.textContent=o.target;o.sp.className="ch";}); return; }
+  var lockAt=0;
+  var iv=setInterval(function(){
+    var all=true;
+    spans.forEach(function(o,i){
+      if(o.locked)return;
+      if(i<lockAt){o.sp.textContent=o.target;o.sp.className="ch";o.locked=true;}
+      else{o.sp.textContent=pool[(Math.random()*pool.length)|0];all=false;}
+    });
+    lockAt+=0.5; if(all)clearInterval(iv);
+  },55);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== 預設資料 ✏️（要讓所有人看到的版本，改這裡再上傳） ===== */
+  var DEFAULT_HUB = {
+    adminPass: "1234",   // 首頁後台密碼（開發者）
+    codePass:  "0000",   // 查看程式碼密碼（給學生）
+    mechanisms: [
+      { id:"lock", code:"機關 No.01", name:"密碼鎖",
+        desc:"轉動轉盤對出密碼，成功開箱取出線索。每個轉盤可設數字／英文／自定字元，附後台設定與防暴力破解。",
+        href:"lock/", status:"live", icon:"lock", shareCode:true },
+      { id:"m02", code:"機關 No.02", name:"摩斯密碼燈",
+        desc:"信號燈把訊息閃成摩斯密碼（可同時發聲），玩家解讀後輸入答案，正確即顯示線索。附對照表、速度與後台設定。",
+        href:"morse/", status:"live", icon:"morse", shareCode:true },
+      { id:"m03", code:"機關 No.03", name:"線索拼圖",
+        desc:"拖曳碎片重組圖案或字句，拼回正確順序即縫合發光並顯示線索。支援圖片拼圖與字句重組兩種模式。",
+        href:"puzzle/", status:"live", icon:"puzzle", shareCode:true },
+      { id:"m04", code:"機關 No.04", name:"翻牌記憶",
+        desc:"翻開兩張牌找相同圖案，全部配對成功即顯示線索。卡面可用 emoji、文字或符號自訂，最多 12 對。",
+        href:"cards/", status:"live", icon:"cards", shareCode:true },
+      { id:"m05", code:"機關 No.05", name:"連線謎題",
+        desc:"從左邊拉線連到右邊正確的端點，全部接對即接通發光並顯示線索。配對題目可在後台自訂。",
+        href:"wires/", status:"live", icon:"wires", shareCode:true },
+      { id:"m06", code:"機關 No.06", name:"紫外線顯影",
+        desc:"用螢幕當 UV 燈，照出藏在圖中的隱形字。", href:"", status:"soon", icon:"uv", shareCode:false }
+    ]
+  };
+
+  /* 圖示 */
+  var ICONS = {
+    lock:'<path d="M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="9.5" cy="16" r="1.1"/><circle cx="12" cy="16" r="1.1"/><circle cx="14.5" cy="16" r="1.1"/>',
+    morse:'<circle cx="5" cy="12" r="1.4"/><rect x="9" y="11" width="6" height="2.4" rx="1.2"/><circle cx="19" cy="12" r="1.4"/>',
+    puzzle:'<path d="M10 4h4a1 1 0 0 1 1 1v2a2 2 0 1 0 4 0V5a1 1 0 0 0-1-1M20 10v4a1 1 0 0 1-1 1h-2a2 2 0 1 0 0 4h2a1 1 0 0 0 1-1M4 14v-4a1 1 0 0 1 1-1h2a2 2 0 1 0 0-4H5a1 1 0 0 0-1 1v0M14 20h-4a1 1 0 0 1-1-1v-2a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1"/>',
+    cards:'<rect x="4" y="6" width="11" height="14" rx="2"/><path d="M9 6V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1"/>',
+    wires:'<circle cx="6" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="12" r="2"/><path d="M8 7h2c2 0 3 1.5 5 3M8 17h2c2 0 3-1.5 5-3"/>',
+    uv:'<path d="M7 4v7a5 5 0 0 0 10 0V4"/><path d="M7 4h10"/><path d="M9 20h6"/><path d="M12 16v4"/>',
+    key:'<circle cx="7.5" cy="15.5" r="3.5"/><path d="M10 13L20 3M16 4l3 3M14 6l3 3"/>',
+    box:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>'
+  };
+  var ICON_KEYS = Object.keys(ICONS);
+
+  /* ===== 儲存 ===== */
+  var KEY="escape.hub.v1", mem=null;
+  function load(){ try{var s=localStorage.getItem(KEY); if(s)return JSON.parse(s);}catch(e){} return mem; }
+  function save(h){ mem=h; try{localStorage.setItem(KEY,JSON.stringify(h));}catch(e){} }
+
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function normalize(h){
+    if(!h||typeof h!=="object") h=clone(DEFAULT_HUB);
+    if(typeof h.adminPass!=="string"||h.adminPass==="") h.adminPass="1234";
+    if(typeof h.codePass!=="string"||h.codePass==="") h.codePass="0000";
+    if(!Array.isArray(h.mechanisms)) h.mechanisms=clone(DEFAULT_HUB.mechanisms);
+    h.mechanisms.forEach(function(m,i){
+      m.id=m.id||("m"+Date.now()+i);
+      m.code=m.code||("機關 No."+(i+1));
+      m.name=m.name||"未命名機關";
+      m.desc=m.desc||"";
+      m.href=m.href||"";
+      m.status=(m.status==="live")?"live":"soon";
+      m.icon=ICONS[m.icon]?m.icon:"box";
+      m.shareCode=!!m.shareCode;
+    });
+    return h;
+  }
+
+  var hub = normalize(load());
+
+  /* ===== 渲染卡片 ===== */
+  var shelf=document.getElementById("shelf");
+  function svgIcon(key,cls){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[key]||"")+'</svg>';
+  }
+  function renderCards(){
+    shelf.innerHTML=""; var live=0;
+    hub.mechanisms.forEach(function(m,i){
+      var isLive = m.status==="live" && m.href;
+      if(isLive) live++;
+      var canCode = m.shareCode && m.href;   // 有頁面才談得上看程式碼
+      var el = isLive ? document.createElement("a") : document.createElement("div");
+      el.className = isLive ? "card" : "card soon";
+      if(isLive){ el.href=m.href; el.target="_blank"; el.rel="noopener"; }
+      el.style.animationDelay=(i*0.06)+"s";
+      el.innerHTML =
+        (canCode?'<div class="cardcode" title="查看程式碼" data-href="'+m.href+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>':'')+
+        '<div class="code">'+esc(m.code)+'</div>'+
+        '<div class="icon">'+svgIcon(m.icon)+'</div>'+
+        '<h2>'+esc(m.name)+'</h2>'+
+        '<p>'+esc(m.desc)+'</p>'+
+        '<div class="foot">'+
+          (isLive?'<span class="tag live">可遊玩</span>':'<span class="tag soon">規劃中</span>')+
+          (isLive?'<span class="go">開始 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>':'')+
+        '</div>';
+      var cc=el.querySelector(".cardcode");
+      if(cc){ cc.addEventListener("click",function(ev){ ev.preventDefault(); ev.stopPropagation(); openGate("code", m.href); }); }
+      shelf.appendChild(el);
+    });
+    document.getElementById("liveCount").textContent=live;
+  }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  /* ===== 齒輪長按 → 首頁後台 ===== */
+  var gear=document.getElementById("gear"), holdTimer=null;
+  function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(function(){openGate("admin");},600); }
+  function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
+  gear.addEventListener("pointerdown",function(e){e.preventDefault();startHold();});
+  gear.addEventListener("pointerup",cancelHold);
+  gear.addEventListener("pointerleave",cancelHold);
+  gear.addEventListener("pointercancel",cancelHold);
+
+  /* ===== 密碼框（admin / code） ===== */
+  var gate=document.getElementById("gate"), gateBox=document.getElementById("gateBox"),
+      gateInput=document.getElementById("gateInput"), gateErr=document.getElementById("gateErr"),
+      gateTitle=document.getElementById("gateTitle"), gateSub=document.getElementById("gateSub");
+  var gateMode="admin", gateHref="";
+  function openGate(mode,href){
+    gateMode=mode||"admin"; gateHref=href||"";
+    if(gateMode==="code"){ gateTitle.textContent="程式碼密碼"; gateSub.textContent="輸入密碼以查看程式碼"; }
+    else{ gateTitle.textContent="首頁後台密碼"; gateSub.textContent="請輸入密碼以進入設定"; }
+    gateErr.textContent=""; gateInput.value=""; gate.classList.add("show");
+    setTimeout(function(){ try{gateInput.focus();}catch(e){} },60);
+  }
+  function closeGate(){ gate.classList.remove("show"); }
+  function tryGate(){
+    var ok=(gateMode==="code")?(gateInput.value===hub.codePass):(gateInput.value===hub.adminPass);
+    if(ok){ closeGate(); if(gateMode==="code") openCodeView(gateHref); else openAdmin(); }
+    else{ gateErr.textContent="密碼錯誤"; gateBox.classList.remove("shake"); void gateBox.offsetWidth; gateBox.classList.add("shake"); gateInput.value=""; try{gateInput.focus();}catch(e){} }
+  }
+  document.getElementById("gateOk").addEventListener("click",tryGate);
+  document.getElementById("gateCancel").addEventListener("click",closeGate);
+  gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
+
+  /* ===== 程式碼檢視 ===== */
+  var codeview=document.getElementById("codeview"), cvText=document.getElementById("cvText"), cvTitle=document.getElementById("cvTitle");
+  function openCodeView(href){
+    cvTitle.textContent="原始碼 · "+href;
+    cvText.value="讀取中…"; codeview.classList.add("show");
+    fetch(href,{cache:"no-store"})
+      .then(function(r){ if(!r.ok)throw 0; return r.text(); })
+      .then(function(t){ cvText.value=t; })
+      .catch(function(){ cvText.value="無法讀取原始碼。\n\n請在已上線的網站（例如 GitHub Pages）開啟此頁再試；本機 file:// 直接開檔可能被瀏覽器擋住。"; });
+  }
+  document.getElementById("cvClose").addEventListener("click",function(){ codeview.classList.remove("show"); });
+  document.getElementById("cvCopy").addEventListener("click",function(){
+    cvText.focus(); cvText.select();
+    var done=function(){ toast("已複製"); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(cvText.value).then(done,function(){try{document.execCommand("copy");done();}catch(e){}}); }
+    else{ try{document.execCommand("copy");done();}catch(e){} }
+  });
+
+  /* ===== 首頁後台 ===== */
+  var admin=document.getElementById("admin"), mechEditor=document.getElementById("mechEditor"),
+      codePassInput=document.getElementById("codePassInput"), adminPassInput=document.getElementById("adminPassInput");
+  var draft=null;
+
+  function openAdmin(){ draft=clone(hub); renderAdmin(); admin.classList.add("show"); }
+  function renderAdmin(){
+    mechEditor.innerHTML="";
+    draft.mechanisms.forEach(function(m,i){ mechEditor.appendChild(buildMechCard(m,i)); });
+    codePassInput.value=draft.codePass||"";
+    adminPassInput.value=draft.adminPass||"";
+  }
+  function iconOptions(sel){
+    return ICON_KEYS.map(function(k){ return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+k+'</option>'; }).join("");
+  }
+  function buildMechCard(m,i){
+    var card=document.createElement("div"); card.className="mcard";
+    card.innerHTML=
+      '<div class="mhead"><span class="mttl">'+esc(m.code||("機關 "+(i+1)))+'</span>'+
+        '<span class="mtools">'+
+          '<button class="miconbtn up" title="上移" type="button">▲</button>'+
+          '<button class="miconbtn down" title="下移" type="button">▼</button>'+
+          '<button class="miconbtn del" title="刪除" type="button">✕</button>'+
+        '</span></div>'+
+      '<div class="mrow">'+
+        '<div class="mcol grow"><span>名稱</span><input class="mini jname" value="'+esc(m.name)+'"></div>'+
+        '<div class="mcol"><span>編號</span><input class="mini jcode" value="'+esc(m.code)+'" style="width:120px"></div>'+
+      '</div>'+
+      '<div class="mrow"><div class="mcol grow" style="flex:1 1 100%"><span>說明</span><textarea class="mini jdesc" rows="2">'+esc(m.desc)+'</textarea></div></div>'+
+      '<div class="mrow">'+
+        '<div class="mcol grow"><span>連結（資料夾，如 lock/）</span><input class="mini jhref" value="'+esc(m.href)+'" placeholder="lock/"></div>'+
+        '<div class="mcol"><span>圖示</span><select class="mini jicon" style="width:120px">'+iconOptions(m.icon)+'</select></div>'+
+      '</div>'+
+      '<div class="mrow" style="align-items:center">'+
+        '<div class="mcol"><span>狀態</span><div class="seg jstatus"><button data-s="live" type="button">可遊玩</button><button data-s="soon" type="button">規劃中</button></div></div>'+
+        '<div class="mcol grow"><span>分享程式碼</span><div class="mshare"><div class="switch jshare"><i></i></div><span style="color:var(--txt-dim);font-size:13px">卡片右上角顯示 &lt;/&gt; 鈕</span></div></div>'+
+      '</div>';
+
+    var jname=card.querySelector(".jname"), jcode=card.querySelector(".jcode"), jdesc=card.querySelector(".jdesc"),
+        jhref=card.querySelector(".jhref"), jicon=card.querySelector(".jicon");
+    jname.addEventListener("input",function(){ m.name=jname.value; });
+    jcode.addEventListener("input",function(){ m.code=jcode.value; });
+    jdesc.addEventListener("input",function(){ m.desc=jdesc.value; });
+    jhref.addEventListener("input",function(){ m.href=jhref.value.trim(); });
+    jicon.addEventListener("change",function(){ m.icon=jicon.value; });
+
+    var seg=card.querySelector(".jstatus");
+    Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle("on", b.dataset.s===m.status); });
+    seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; m.status=b.dataset.s;
+      Array.prototype.forEach.call(seg.children,function(x){ x.classList.toggle("on",x.dataset.s===m.status); }); });
+
+    var sw=card.querySelector(".jshare");
+    sw.classList.toggle("on",!!m.shareCode);
+    sw.addEventListener("click",function(){ m.shareCode=!m.shareCode; sw.classList.toggle("on",m.shareCode); });
+
+    card.querySelector(".del").addEventListener("click",function(){ draft.mechanisms.splice(i,1); renderAdmin(); });
+    card.querySelector(".up").addEventListener("click",function(){ if(i<=0)return; var a=draft.mechanisms; var t=a[i-1];a[i-1]=a[i];a[i]=t; renderAdmin(); });
+    card.querySelector(".down").addEventListener("click",function(){ var a=draft.mechanisms; if(i>=a.length-1)return; var t=a[i+1];a[i+1]=a[i];a[i]=t; renderAdmin(); });
+    return card;
+  }
+
+  document.getElementById("addMech").addEventListener("click",function(){
+    draft.mechanisms.push({ id:"m"+Date.now(), code:"機關 No."+(draft.mechanisms.length+1), name:"新機關", desc:"", href:"", status:"soon", icon:"box", shareCode:false });
+    renderAdmin();
+  });
+  codePassInput.addEventListener("input",function(){ draft.codePass=codePassInput.value; });
+  adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
+
+  document.getElementById("exportBtn").addEventListener("click",function(){
+    var json=JSON.stringify({adminPass:draft.adminPass,codePass:draft.codePass,mechanisms:draft.mechanisms},null,2);
+    var done=function(){ toast("設定已複製"); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(json).then(done,function(){ window.prompt("複製以下設定：",json); }); }
+    else{ window.prompt("複製以下設定：",json); }
+  });
+  document.getElementById("importBtn").addEventListener("click",function(){
+    var s=window.prompt("貼上先前匯出的設定 JSON："); if(!s)return;
+    try{ var o=JSON.parse(s); draft=normalize(o); renderAdmin(); toast("已匯入"); }
+    catch(e){ toast("格式錯誤，無法匯入"); }
+  });
+
+  function commit(){ hub=normalize(draft); save(hub); renderCards(); }
+  document.getElementById("saveBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); toast("已儲存"); });
+  document.getElementById("cancelBtn").addEventListener("click",function(){ admin.classList.remove("show"); });
+
+  var toastEl=document.getElementById("toast"), toastT=null;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
+
+  /* 啟動 */
+  renderCards();
+})();
+</script>
+</body>
+</html>
