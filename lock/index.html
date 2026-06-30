@@ -511,6 +511,7 @@
 
     <div class="actions">
       <button class="btn ghost" id="previewFront">預覽前台</button>
+      <button class="btn ghost" id="shareBtn">產生分享連結</button>
       <button class="btn primary" id="saveBtn">儲存並返回</button>
     </div>
   </div>
@@ -533,6 +534,26 @@
     mem=c;
     try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}
   }
+
+  /* ---------- 分享連結：把設定編碼進網址（無後端） ---------- */
+  function _b64encode(str){
+    var bytes=new TextEncoder().encode(str), bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function _b64decode(s){
+    s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4)s+="=";
+    var bin=atob(s), bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function encodeCfg(c){ try{ return _b64encode(JSON.stringify(c)); }catch(e){ return ""; } }
+  function decodeCfg(s){ try{ return JSON.parse(_b64decode(s)); }catch(e){ return null; } }
+  function getSharedCfg(){
+    try{ var m=(location.search+location.hash).match(/[?#&]c=([^&]+)/); if(m&&m[1]) return decodeCfg(decodeURIComponent(m[1])); }catch(e){}
+    return null;
+  }
+  function shareURL(){ return location.origin+location.pathname+"?c="+encodeURIComponent(encodeCfg(cfg)); }
 
   var NUMS="0123456789", ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   function charsOf(type){
@@ -588,7 +609,7 @@
     return c;
   }
 
-  var cfg = migrate(load());
+  var cfg = migrate(getSharedCfg() || load());
 
   /* ---------- 音效（Web Audio，無外部檔） ---------- */
   var actx=null;
@@ -981,6 +1002,41 @@
     commit();
     admin.classList.remove("show");
   });
+
+  /* 產生分享連結：用目前設定組出一條獨立網址 */
+  function showShareLink(){
+    commit();
+    var url=shareURL();
+    var ov=document.getElementById("shareOverlay");
+    if(!ov){
+      ov=document.createElement("div"); ov.id="shareOverlay";
+      ov.style.cssText="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)";
+      ov.innerHTML='<div style="width:100%;max-width:430px;padding:22px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)">'
+        +'<div style="font-family:var(--display,sans-serif);font-weight:600;letter-spacing:1px;color:#fff;font-size:16px;text-align:center">分享連結</div>'
+        +'<div style="color:#9aa1a9;font-size:12px;text-align:center;margin:6px 0 14px;line-height:1.6">這條網址就是「目前設定」的獨立版本。複製後發給玩家即可；要做另一款，回來改設定再產生一條新的。</div>'
+        +'<input id="shareUrlInput" readonly style="width:100%;background:#13171c;border:1px solid rgba(255,255,255,.08);border-radius:11px;color:#d9b878;padding:12px;font-size:13px;word-break:break-all;font-family:var(--display,monospace)">'
+        +'<div style="display:flex;gap:10px;margin-top:14px">'
+          +'<button id="shareCopy" style="flex:1;border:none;border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,#d9b878,#b8935a);color:#1c1206">複製連結</button>'
+          +'<button id="shareClose" style="flex:none;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e7e3da;border-radius:12px;padding:13px 18px;font-size:15px;cursor:pointer">關閉</button>'
+        +'</div>'
+        +'<div id="shareMsg" style="height:16px;color:#5fbf7e;font-size:12px;text-align:center;margin-top:10px"></div></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener("click",function(e){ if(e.target===ov) ov.style.display="none"; });
+    }
+    ov.style.display="flex";
+    var inp=document.getElementById("shareUrlInput"); inp.value=url;
+    document.getElementById("shareMsg").textContent="";
+    setTimeout(function(){ try{inp.focus();inp.setSelectionRange(0,url.length);}catch(e){} },50);
+    document.getElementById("shareClose").onclick=function(){ ov.style.display="none"; };
+    document.getElementById("shareCopy").onclick=function(){
+      var ok=function(){ document.getElementById("shareMsg").textContent="已複製！"; };
+      var fail=function(){ document.getElementById("shareMsg").textContent="請長按上方網址手動複製"; };
+      try{ inp.focus(); inp.setSelectionRange(0,url.length); }catch(e){}
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(ok,function(){ try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }); }
+      else { try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }
+    };
+  }
+  document.getElementById("shareBtn").addEventListener("click",showShareLink);
 
   var toastEl=document.getElementById("savedToast"),toastT=null;
   function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
