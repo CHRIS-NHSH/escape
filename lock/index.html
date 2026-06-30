@@ -482,7 +482,7 @@
       <label>道具圖片（一張紙）</label>
       <label class="filebtn" for="fileInput">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        上傳圖片
+        上傳圖片（僅限本機使用）
       </label>
       <input type="file" id="fileInput" accept="image/*">
       <input class="url-input" id="urlInput" placeholder="或貼上圖片網址 https://...">
@@ -578,7 +578,7 @@
   // 防呆：長度、各轉盤類型、答案字元對齊
   function normalize(c){
     c.length = (c.length===3?3:4);
-    if(typeof c.adminPass!=="string" || c.adminPass==="") c.adminPass="1234";
+    if(typeof c.adminPass!=="string" || c.adminPass==="") c.adminPass="9633";
     c.dials = c.dials || [];
     c.dials.length = c.length;
     for(var i=0;i<c.length;i++){
@@ -595,7 +595,7 @@
   }
   // 從舊版設定（cfg.charset + cfg.password）轉成新版（cfg.dials）
   function migrate(c){
-    if(!c) return { length:4, dials:[makeDial("1"),makeDial("2"),makeDial("3"),makeDial("4")], image:"", caption:"", sound:true, adminPass:"1234" };
+    if(!c) return { length:4, dials:[makeDial("1"),makeDial("2"),makeDial("3"),makeDial("4")], image:"", caption:"", sound:true, adminPass:"9633" };
     if(!c.dials){
       var len=(c.length===3?3:4), set=charsOf(c.charset||"num"), dials=[];
       for(var i=0;i<len;i++){
@@ -603,7 +603,7 @@
         if(set.indexOf(ans)<0)ans=set[0];
         dials.push({type:(c.charset||"num"), custom:"", ans:ans});
       }
-      c={ length:len, dials:dials, image:c.image||"", caption:c.caption||"", sound:c.sound!==false, adminPass:c.adminPass||"1234" };
+      c={ length:len, dials:dials, image:c.image||"", caption:c.caption||"", sound:c.sound!==false, adminPass:c.adminPass||"9633" };
     }
     normalize(c);
     return c;
@@ -987,7 +987,7 @@
     cfg.image=draft.image;
     cfg.caption=draft.caption;
     cfg.sound=draft.sound;
-    cfg.adminPass=(draft.adminPass && draft.adminPass.length)?draft.adminPass:"1234";
+    cfg.adminPass=(draft.adminPass && draft.adminPass.length)?draft.adminPass:"9633";
     normalize(cfg);
     save(cfg);
     buildDials();

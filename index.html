@@ -329,7 +329,7 @@
 
   /* ===== 預設資料 ✏️（要讓所有人看到的版本，改這裡再上傳） ===== */
   var DEFAULT_HUB = {
-    adminPass: "1234",   // 首頁後台密碼（開發者）
+    adminPass: "9633",   // 首頁後台密碼（開發者）
     codePass:  "0000",   // 查看程式碼密碼（給學生）
     mechanisms: [
       { id:"lock", code:"機關 No.01", name:"密碼鎖",
@@ -349,7 +349,10 @@
         href:"wires/", status:"live", icon:"wires", shareCode:true },
       { id:"m06", code:"機關 No.06", name:"紫外線顯影",
         desc:"用手指當紫外線燈在畫面上掃，照出隱形的字或圖；可選需輸入答案才過關。發光顏色、光圈大小、底圖皆可設定。",
-        href:"uv/", status:"live", icon:"uv", shareCode:true }
+        href:"uv/", status:"live", icon:"uv", shareCode:true },
+      { id:"m07", code:"機關 No.07", name:"拆炸彈",
+        desc:"倒數計時中剪斷正確的線路來拆除，剪錯會扣時間或直接引爆，時間歸零就 BOOM。倒數秒數、線路顏色與正解、處罰方式皆可設定。",
+        href:"bomb/", status:"live", icon:"bomb", shareCode:true }
     ]
   };
 
@@ -362,7 +365,8 @@
     wires:'<circle cx="6" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="12" r="2"/><path d="M8 7h2c2 0 3 1.5 5 3M8 17h2c2 0 3-1.5 5-3"/>',
     uv:'<path d="M7 4v7a5 5 0 0 0 10 0V4"/><path d="M7 4h10"/><path d="M9 20h6"/><path d="M12 16v4"/>',
     key:'<circle cx="7.5" cy="15.5" r="3.5"/><path d="M10 13L20 3M16 4l3 3M14 6l3 3"/>',
-    box:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>'
+    box:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+    bomb:'<circle cx="10.5" cy="15" r="6"/><path d="M14.7 10.8l1.8-1.8M16.5 9c.8-.8.6-2.2 1.9-2.6"/><path d="M19 5.4l.6-1.3M20.8 6.6l1.2-.5M20.4 8.4l1.3.2"/>'
   };
   var ICON_KEYS = Object.keys(ICONS);
 
@@ -374,7 +378,7 @@
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   function normalize(h){
     if(!h||typeof h!=="object") h=clone(DEFAULT_HUB);
-    if(typeof h.adminPass!=="string"||h.adminPass==="") h.adminPass="1234";
+    if(typeof h.adminPass!=="string"||h.adminPass==="") h.adminPass="9633";
     if(typeof h.codePass!=="string"||h.codePass==="") h.codePass="0000";
     if(!Array.isArray(h.mechanisms)) h.mechanisms=clone(DEFAULT_HUB.mechanisms);
     h.mechanisms.forEach(function(m,i){

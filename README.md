@@ -9,9 +9,14 @@
 - `puzzle/index.html` — 機關 No.03：線索拼圖
 - `cards/index.html` — 機關 No.04：翻牌記憶
 - `wires/index.html` — 機關 No.05：連線謎題
+- `uv/index.html` — 機關 No.06：紫外線顯影
+- `bomb/index.html` — 機關 No.07：拆炸彈
 
 ## 各機關
 每個機關都有自己的後台（長按右上角齒輪 → 輸入後台密碼，預設 `1234`）可修改內容。
+
+## 範本
+- `template/index.html` — 空白機關起手骨架（共用外殼已備好，找 `✏️` 標記填入玩法）
 
 ## 新增機關
 1. 在 `<名稱>/index.html` 放該機關的單檔網頁。

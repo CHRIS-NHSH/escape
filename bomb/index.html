@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>紫外線顯影</title>
+<title>拆炸彈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,19 +12,20 @@
     --slate:#1c2128; --slate2:#161a20;
     --graphite:#2a3139; --graphite-lo:#1f242b;
     --brass:#d9b878; --brass-mid:#b8935a; --brass-lo:#8a6d3f;
-    --amber:#ffce78;
+    --amber:#ffce78; --danger:#e0584e;
     --txt:#e7e3da; --txt-dim:#9aa1a9;
-    --paper:#efe4cb;
+    --paper:#f4ead8;
     --line:rgba(255,255,255,.08);
     --display:"Chakra Petch", system-ui, sans-serif;
     --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
-    --secret:#9dffc0; --secret-glow:#43ff93;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
   body{font-family:var(--cjk);color:var(--txt);overflow:hidden;user-select:none;-webkit-user-select:none;
     background:radial-gradient(120% 90% at 50% 16%, #29313a 0%, var(--slate) 44%, var(--slate2) 100%);}
   .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;gap:14px}
+  body.boom-flash{animation:boomflash .5s}
+  @keyframes boomflash{0%,100%{background:var(--slate)}25%{background:#5a1a14}50%{background:#7a2018}}
 
   .gear{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     color:var(--txt-dim);background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;z-index:40;transition:color .2s,background .2s}
@@ -35,32 +36,60 @@
 
   .brandline{font-family:var(--display);font-weight:600;letter-spacing:3px;font-size:12px;color:var(--brass-mid);text-transform:uppercase}
 
-  /* 顯影板 */
-  .board{position:relative;width:min(92vw,460px);aspect-ratio:4/3;border-radius:16px;overflow:hidden;touch-action:none;cursor:crosshair;
-    border:1px solid var(--line);box-shadow:0 30px 60px -22px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);transition:box-shadow .4s ease}
-  .board.solved{box-shadow:0 0 0 2px var(--brass), 0 0 30px rgba(255,206,120,.3), 0 30px 60px -22px rgba(0,0,0,.7)}
-  .surface{position:absolute;inset:0;background:
-      radial-gradient(120% 80% at 30% 20%, #f3e9d0, #e3d4b2 70%, #d8c8a4 100%);}
-  .surface.img{background-size:cover;background-position:center}
-  .decoy{position:absolute;inset:0;overflow:hidden;color:#b9a87f;opacity:.5}
-  .decoy span{position:absolute;font-family:var(--display);font-weight:600}
-  .hidden{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;
-    -webkit-mask:radial-gradient(circle var(--r,0px) at var(--x,50%) var(--y,50%), #000 0 62%, rgba(0,0,0,0) 80%);
-            mask:radial-gradient(circle var(--r,0px) at var(--x,50%) var(--y,50%), #000 0 62%, rgba(0,0,0,0) 80%);}
-  .hidden .secret{font-family:var(--display);font-weight:700;font-size:clamp(34px,15vw,84px);letter-spacing:6px;text-align:center;word-break:break-word;
-    color:var(--secret);text-shadow:0 0 8px var(--secret-glow),0 0 22px var(--secret-glow),0 0 40px var(--secret-glow)}
-  .hidden img{width:100%;height:100%;object-fit:contain;filter:brightness(1.15) saturate(1.2) drop-shadow(0 0 10px var(--secret-glow))}
-  .beam{position:absolute;left:0;top:0;width:0;height:0;border-radius:50%;pointer-events:none;opacity:0;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:opacity .2s;
-    background:radial-gradient(circle, rgba(160,100,255,.5), rgba(130,80,255,.16) 55%, rgba(130,80,255,0) 72%)}
+  /* 炸彈裝置 */
+  .bomb{position:relative;width:min(92vw,440px);border-radius:18px;padding:18px;
+    background:linear-gradient(180deg,#333b44,#222831);border:1px solid var(--line);
+    box-shadow:0 30px 60px -22px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);transition:box-shadow .4s ease}
+  .bomb.defused{box-shadow:0 0 0 2px var(--brass), 0 0 32px rgba(255,206,120,.3), 0 30px 60px -22px rgba(0,0,0,.75)}
+  .bomb.shake{animation:shakeb .35s}
+  @keyframes shakeb{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,2px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-5px,-1px)}80%{transform:translate(5px,1px)}}
+
+  .readout{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;
+    background:#0e1216;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .timer{font-family:var(--display);font-weight:700;font-size:46px;letter-spacing:3px;color:var(--amber);
+    text-shadow:0 0 10px rgba(255,206,120,.55);font-variant-numeric:tabular-nums}
+  .timer.urgent{color:var(--danger);text-shadow:0 0 12px rgba(224,88,78,.7);animation:blink 1s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .status{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .led{display:flex;align-items:center;gap:7px;font-family:var(--display);font-size:12px;letter-spacing:2px;color:var(--txt-dim)}
+  .led .dot{width:11px;height:11px;border-radius:50%;background:var(--danger);box-shadow:0 0 8px var(--danger);animation:blink 1s steps(2,start) infinite}
+  .bomb.defused .led .dot{background:#5fbf7e;box-shadow:0 0 8px #5fbf7e;animation:none}
+  .bomb.defused .led .txt{color:#5fbf7e}
+  .penalty-flash{position:absolute;top:60px;left:50%;transform:translateX(-50%);font-family:var(--display);font-weight:700;font-size:24px;color:var(--danger);opacity:0;pointer-events:none}
+  .penalty-flash.show{animation:penalty .9s ease}
+  @keyframes penalty{0%{opacity:0;transform:translate(-50%,6px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-22px)}}
+
+  /* 線路 */
+  .wires{display:flex;flex-direction:column;gap:14px;padding:4px 2px}
+  .wire{display:flex;align-items:center;gap:6px;cursor:pointer;touch-action:manipulation;padding:6px 0}
+  .screw{width:18px;height:18px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#c9ccd1,#6b7178);box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.5)}
+  .screw::after{content:"";display:block;width:10px;height:2px;background:#3a3f45;margin:8px auto 0;border-radius:2px}
+  .cable{position:relative;flex:1;height:16px}
+  .cable .half{position:absolute;top:0;height:100%;width:50%;border-radius:8px;box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 4px rgba(0,0,0,.35)}
+  .cable .half.l{left:0;transition:transform .25s ease}
+  .cable .half.r{right:0;transition:transform .25s ease}
+  .spark{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#fff7c8;transform:translate(-50%,-50%) scale(0);opacity:0}
+  .wire.cut{cursor:default}
+  .wire.cut .half.l{transform:translateX(-10px) rotate(-9deg)}
+  .wire.cut .half.r{transform:translateX(10px) rotate(9deg)}
+  .wire.cut .spark{animation:spark .4s ease}
+  @keyframes spark{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
+  .wire.cut .screw{opacity:.5}
 
   .hint{min-height:20px;color:var(--txt-dim);font-size:14px;letter-spacing:1px;text-align:center;padding:0 16px}
-  .answer{display:flex;gap:10px;width:100%;max-width:360px}
-  .answer input{flex:1;height:50px;text-align:center;font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:4px;text-transform:uppercase;background:#1c2026;border:1px solid var(--line);border-radius:12px;color:var(--txt)}
-  .answer input:focus{outline:none;border-color:var(--brass-mid)}
-  .answer .submit{flex:none;border:none;border-radius:12px;padding:0 22px;font-family:var(--cjk);font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
-  .answer.hide{display:none}
-  .answer input.wrong{animation:shakex .35s;border-color:#e8857a}
-  @keyframes shakex{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+  .pill{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:11px 22px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .pill:active{background:rgba(255,255,255,.1)}
+  .pill svg{width:16px;height:16px;color:var(--brass)}
+
+  /* BOOM */
+  .boom{position:fixed;inset:0;z-index:35;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 45%,rgba(224,88,78,.25),rgba(0,0,0,.85) 60%);backdrop-filter:blur(2px);padding:24px}
+  .boom.show{display:flex;animation:fade .3s ease}
+  .boom-inner{text-align:center}
+  .boom-emoji{font-size:80px;line-height:1;animation:pop .5s cubic-bezier(.2,.9,.3,1.4)}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+  .boom-title{font-family:var(--display);font-weight:700;letter-spacing:4px;font-size:30px;color:var(--danger);margin:14px 0 6px}
+  .boom-sub{color:var(--txt-dim);font-size:15px;margin-bottom:22px}
+  .boom .retry{border:none;border-radius:12px;padding:14px 30px;font-family:var(--cjk);font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
 
   /* 揭示 */
   .reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 40%, rgba(255,206,120,.14), rgba(0,0,0,.8) 60%);backdrop-filter:blur(3px);padding:24px}
@@ -92,6 +121,7 @@
   .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
   .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
   .shake-x{animation:shakex .35s}
+  @keyframes shakex{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
   /* 後台 */
   .admin{position:fixed;inset:0;z-index:50;display:none;background:linear-gradient(180deg,#13171c,#0e1115);overflow:auto;padding:26px 20px 60px}
@@ -108,6 +138,18 @@
   .seg{display:inline-flex;background:#1c2026;border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;flex-wrap:wrap}
   .seg button{border:none;background:transparent;color:var(--txt-dim);padding:9px 16px;border-radius:8px;font-family:var(--cjk);font-size:14px;cursor:pointer}
   .seg button.on{background:var(--brass-mid);color:#1c1206;font-weight:600}
+  .row{display:flex;align-items:center;gap:10px}
+  .num-input{width:110px;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:15px;font-family:var(--display)}
+  .num-input:focus{outline:none;border-color:var(--brass-mid)}
+  /* 線路編輯 */
+  .wrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#15181d;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+  .sw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+  .sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--brass)}
+  .correct-btn{flex:none;border:1px solid var(--line);background:#1c2026;color:var(--txt-dim);border-radius:9px;padding:8px 12px;font-family:var(--cjk);font-size:13px;cursor:pointer;white-space:nowrap}
+  .correct-btn.on{background:var(--brass-mid);color:#1c1206;font-weight:700;border-color:transparent}
+  .wdel{width:32px;height:38px;flex:none;border:1px solid var(--line);background:#13171c;color:#e8857a;border-radius:9px;cursor:pointer}
+  .addbtn{width:100%;border:1px dashed var(--line);background:rgba(255,255,255,.02);color:var(--brass);border-radius:11px;padding:12px;font-family:var(--cjk);font-size:14px;cursor:pointer;margin-top:2px}
   .toggle{display:flex;align-items:center;gap:12px}
   .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
   .switch.on{background:var(--brass-mid)}.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.switch.on i{left:25px}
@@ -116,8 +158,6 @@
   .preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#15181d;display:none}
   .preview.show{display:block}.preview img{width:100%;border-radius:8px;display:block}
   .hide{display:none}
-  .swatch{display:inline-flex;gap:8px;align-items:center}
-  .dot{width:18px;height:18px;border-radius:50%;box-shadow:0 0 8px currentColor}
   .actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
   .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
   .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
@@ -125,7 +165,7 @@
   .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line);z-index:62}
   .saved.show{opacity:1;transform:translateX(-50%)}
 
-  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.timer.urgent,.led .dot{animation:none!important}}
 </style>
 </head>
 <body>
@@ -136,23 +176,35 @@
 </div>
 
 <div class="stage" id="stage">
-  <div class="brandline">UV LIGHT · 紫外線顯影</div>
-  <div class="board" id="board">
-    <div class="surface" id="surface"></div>
-    <div class="decoy" id="decoy"></div>
-    <div class="hidden" id="hidden"></div>
-    <div class="beam" id="beam"></div>
+  <div class="brandline">DEFUSE · 拆除裝置</div>
+  <div class="bomb" id="bomb">
+    <div class="penalty-flash" id="penaltyFlash"></div>
+    <div class="readout">
+      <div class="timer" id="timer">00:00</div>
+      <div class="status">
+        <div class="led"><span class="dot"></span><span class="txt" id="ledTxt">ARMED</span></div>
+      </div>
+    </div>
+    <div class="wires" id="wires"></div>
   </div>
-  <div class="hint" id="hint">用手指當紫外線燈，在畫面上照出隱藏的字</div>
-  <div class="answer" id="answerRow">
-    <input id="ans" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="輸入照到的字">
-    <button class="submit" id="submitBtn">確認</button>
+  <div class="hint" id="hint">剪斷正確的線路來拆除裝置</div>
+  <button class="pill" id="restartBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>重新開始</button>
+</div>
+
+<!-- BOOM -->
+<div class="boom" id="boom">
+  <div class="boom-inner">
+    <div class="boom-emoji">💥</div>
+    <div class="boom-title">BOOM</div>
+    <div class="boom-sub" id="boomSub">時間到，任務失敗</div>
+    <button class="retry" id="retryBtn">重新開始</button>
   </div>
 </div>
 
+<!-- 揭示 -->
 <div class="reveal" id="reveal">
   <div class="case">
-    <div class="tag">REVEALED · 顯影成功</div>
+    <div class="tag">DEFUSED · 拆除成功</div>
     <div class="paper" id="paperHolder"></div>
     <div class="caption" id="caption"></div>
     <button class="close" id="closeReveal">收起</button>
@@ -160,6 +212,7 @@
 </div>
 <div class="lightbox" id="lightbox"><img id="lightboxImg" alt="放大"></div>
 
+<!-- 密碼框 -->
 <div class="gate" id="gate">
   <div class="gate-box" id="gateBox">
     <div class="gate-title">後台密碼</div>
@@ -170,62 +223,34 @@
   </div>
 </div>
 
+<!-- 後台 -->
 <div class="admin" id="admin">
   <div class="admin-wrap">
     <h1>後台設定</h1>
-    <div class="sub">設定隱藏內容，玩家不會看到這個畫面。</div>
+    <div class="sub">設定倒數時間與正確線路，玩家不會看到這個畫面。</div>
 
     <div class="field">
-      <label>隱藏內容類型</label>
-      <div class="seg" id="typeSeg"><button data-t="text">文字</button><button data-t="image">圖片</button></div>
-    </div>
-
-    <div id="textFields">
-      <div class="field">
-        <label>隱藏文字（照出來的字）</label>
-        <input class="url-input" id="hiddenTextInput" autocomplete="off" placeholder="例如 742 或 OPEN">
-        <div class="desc">這串字平常看不到，照到才會發光浮現。</div>
-      </div>
-      <div class="field">
-        <label>需要輸入答案</label>
-        <div class="toggle"><div class="switch" id="reqSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">開啟：玩家要輸入照到的字才過關；關閉：純顯影</span></div>
-      </div>
-    </div>
-
-    <div id="imageFields" class="hide">
-      <div class="field">
-        <label>隱藏圖片</label>
-        <label class="filebtn" for="hiddenFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上傳圖片（僅限本機使用）</label>
-        <input type="file" id="hiddenFile" accept="image/*">
-        <input class="url-input" id="hiddenUrl" placeholder="或貼上圖片網址 https://..." style="margin-top:10px">
-        <div class="preview" id="hiddenPreview"><img id="hiddenPrevImg" alt="預覽"></div>
-        <div class="desc">建議用透明或深底的圖；圖片模式為純顯影，不需作答。</div>
-      </div>
+      <label>倒數秒數</label>
+      <div class="row"><input class="num-input" id="secInput" type="number" min="5" max="999" inputmode="numeric"><span style="color:var(--txt-dim);font-size:14px">秒</span></div>
+      <div class="desc">玩家要在這時間內剪斷正確線路。建議 30～90 秒。</div>
     </div>
 
     <div class="field">
-      <label>發光顏色</label>
-      <div class="seg" id="glowSeg">
-        <button data-g="green">綠</button><button data-g="cyan">藍</button><button data-g="pink">粉</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>光圈大小</label>
-      <div class="seg" id="sizeSeg"><button data-r="64">小</button><button data-r="92">中</button><button data-r="130">大</button></div>
+      <label>線路（點顏色換色，按「正解」設定要剪的那條）</label>
+      <div id="wireEditor"></div>
+      <button class="addbtn" id="addWire" type="button">＋ 新增線路</button>
+      <div class="desc">最少 3 條、最多 6 條。剪斷標示「正解」的線即拆除成功。哪條是正解通常由其他線索告訴玩家。</div>
     </div>
 
     <div class="field">
-      <label>背景圖片（選填）</label>
-      <label class="filebtn" for="bgFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上傳圖片（僅限本機使用）</label>
-      <input type="file" id="bgFile" accept="image/*">
-      <input class="url-input" id="bgUrl" placeholder="或貼上圖片網址 https://..." style="margin-top:10px">
-      <div class="preview" id="bgPreview"><img id="bgImg" alt="預覽"></div>
-      <div class="desc">平常看得到的底圖（例如地圖、塗鴉）。留空用羊皮紙底。</div>
+      <label>剪錯處罰</label>
+      <div class="seg" id="penaltySeg"><button data-p="deduct">扣時間</button><button data-p="boom">直接爆炸</button></div>
+      <div class="row" id="penaltySecRow" style="margin-top:12px"><span style="color:var(--txt-dim);font-size:14px">每次剪錯扣</span><input class="num-input" id="penaltySecInput" type="number" min="1" max="120" inputmode="numeric"><span style="color:var(--txt-dim);font-size:14px">秒</span></div>
     </div>
 
     <div class="field">
       <label>成功後說明文字（選填）</label>
-      <textarea class="url-input" id="capInput" placeholder="例如：把照到的字交給關主。"></textarea>
+      <textarea class="url-input" id="capInput" placeholder="例如：把線索交給關主。"></textarea>
     </div>
     <div class="field">
       <label>成功後線索圖片（選填）</label>
@@ -237,7 +262,7 @@
 
     <div class="field">
       <label>音效</label>
-      <div class="toggle"><div class="switch" id="soundSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">作答與完成音效</span></div>
+      <div class="toggle"><div class="switch" id="soundSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">倒數滴答與爆炸／拆除音效</span></div>
     </div>
     <div class="field">
       <label>後台密碼</label>
@@ -256,8 +281,11 @@
 (function(){
   "use strict";
 
-  var GLOWS={ green:["#9dffc0","#43ff93"], cyan:["#a6ecff","#36c8ff"], pink:["#ffb0e6","#ff5fd0"] };
-  var KEY="uv.config.v1", mem=null;
+  var COLORS={ red:"#e0584e", blue:"#5b8def", yellow:"#e8c14a", green:"#5fbf7e", white:"#e8e6df", black:"#3a4049", orange:"#e0894e" };
+  var COLOR_KEYS=Object.keys(COLORS);
+  var DEFAULT_WIRES=[{color:"red"},{color:"blue"},{color:"yellow"},{color:"green"}];
+
+  var KEY="bomb.config.v1", mem=null;
   function load(){ try{var s=localStorage.getItem(KEY); if(s)return JSON.parse(s);}catch(e){} return mem; }
   function save(c){ mem=c; try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){} }
 
@@ -281,15 +309,19 @@
   }
   function shareURL(){ return location.origin+location.pathname+"?c="+encodeURIComponent(encodeCfg(cfg)); }
 
-  var cfg = getSharedCfg() || load() || { type:"text", hiddenText:"742", hiddenImage:"", requireAnswer:true, glow:"green", lightSize:92, bgImage:"", caption:"", clueImage:"", sound:true, adminPass:"9633" };
+  var cfg = getSharedCfg() || load() || { seconds:60, wires:DEFAULT_WIRES.map(function(w){return {color:w.color};}), correct:1, penalty:"deduct", penaltySeconds:10, caption:"", clueImage:"", sound:true, adminPass:"9633" };
+  function cleanWires(arr){
+    var out=[]; (Array.isArray(arr)?arr:[]).forEach(function(w){ if(!w)return; var col=COLORS[w.color]?w.color:"red"; out.push({color:col}); });
+    return out.slice(0,6);
+  }
   function normalize(c){
-    if(["text","image"].indexOf(c.type)<0)c.type="text";
-    c.hiddenText=(c.hiddenText==null?"":String(c.hiddenText));
-    c.hiddenImage=c.hiddenImage||""; c.bgImage=c.bgImage||""; c.clueImage=c.clueImage||"";
-    c.requireAnswer=c.requireAnswer!==false;
-    if(!GLOWS[c.glow])c.glow="green";
-    c.lightSize=[64,92,130].indexOf(c.lightSize)>=0?c.lightSize:92;
-    c.caption=c.caption||""; c.sound=c.sound!==false;
+    c.seconds=Math.max(5,Math.min(999, parseInt(c.seconds,10)||60));
+    c.wires=cleanWires(c.wires);
+    while(c.wires.length<3) c.wires.push({color:COLOR_KEYS[c.wires.length%COLOR_KEYS.length]});
+    c.correct=parseInt(c.correct,10); if(isNaN(c.correct)||c.correct<0||c.correct>=c.wires.length)c.correct=0;
+    if(["deduct","boom"].indexOf(c.penalty)<0)c.penalty="deduct";
+    c.penaltySeconds=Math.max(1,Math.min(120, parseInt(c.penaltySeconds,10)||10));
+    c.caption=c.caption||""; c.clueImage=c.clueImage||""; c.sound=c.sound!==false;
     if(typeof c.adminPass!=="string"||c.adminPass==="")c.adminPass="9633";
   }
   normalize(cfg);
@@ -298,79 +330,94 @@
   var actx=null;
   function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return actx; }
   function tone(f,d,t,g){ if(!cfg.sound)return; var c=ac(); if(!c)return; var o=c.createOscillator(),gn=c.createGain();o.type=t||"sine";o.frequency.value=f;gn.gain.value=g||0.05;o.connect(gn);gn.connect(c.destination);var tt=c.currentTime;gn.gain.exponentialRampToValueAtTime(0.0001,tt+d);o.start(tt);o.stop(tt+d);}
-  function buzz(){ tone(150,0.16,"sawtooth",0.05); }
-  function winSnd(){ tone(523,0.16,"sine",0.06); setTimeout(function(){tone(659,0.16,"sine",0.06);},110); setTimeout(function(){tone(784,0.16,"sine",0.06);},220); setTimeout(function(){tone(1047,0.3,"sine",0.06);},330); }
+  function tick(urgent){ tone(urgent?1100:760,0.05,"square",0.04); }
+  function snip(){ tone(520,0.05,"triangle",0.05); setTimeout(function(){tone(300,0.05,"triangle",0.04);},40); }
+  function buzz(){ tone(140,0.22,"sawtooth",0.06); }
+  function boomSnd(){ var c=ac(); if(!c||!cfg.sound)return; var o=c.createOscillator(),gn=c.createGain();o.type="sawtooth";o.frequency.value=90;gn.gain.value=0.12;o.connect(gn);gn.connect(c.destination);var tt=c.currentTime;o.frequency.exponentialRampToValueAtTime(35,tt+0.5);gn.gain.exponentialRampToValueAtTime(0.0001,tt+0.6);o.start(tt);o.stop(tt+0.62); }
+  function defuseSnd(){ tone(523,0.16,"sine",0.06); setTimeout(function(){tone(659,0.16,"sine",0.06);},110); setTimeout(function(){tone(784,0.16,"sine",0.06);},220); setTimeout(function(){tone(1047,0.3,"sine",0.06);},330); }
 
   /* 元素 */
-  var board=document.getElementById("board"), surface=document.getElementById("surface"), decoy=document.getElementById("decoy"),
-      hidden=document.getElementById("hidden"), beam=document.getElementById("beam"),
-      hintEl=document.getElementById("hint"), answerRow=document.getElementById("answerRow"), ans=document.getElementById("ans");
-  var solved=false, R=92;
+  var bomb=document.getElementById("bomb"), wiresEl=document.getElementById("wires"),
+      timerEl=document.getElementById("timer"), ledTxt=document.getElementById("ledTxt"),
+      hintEl=document.getElementById("hint"), penaltyFlash=document.getElementById("penaltyFlash");
+  var endTime=0, timerId=null, running=false, ended=false, lastSec=-1;
 
-  function buildDecoy(){
-    decoy.innerHTML="";
-    var glyphs="✦·✶⊹∴∵※◇△□+×".split("");
-    var n=14;
-    for(var i=0;i<n;i++){
-      var s=document.createElement("span");
-      s.textContent=glyphs[(Math.random()*glyphs.length)|0];
-      s.style.left=(Math.random()*92)+"%"; s.style.top=(Math.random()*88)+"%";
-      s.style.fontSize=(12+Math.random()*22)+"px"; s.style.opacity=(0.3+Math.random()*0.5);
-      decoy.appendChild(s);
-    }
+  function fmt(ms){ var s=Math.ceil(ms/1000); var m=Math.floor(s/60); var ss=s%60; return (m<10?"0":"")+m+":"+(ss<10?"0":"")+ss; }
+  function renderTime(ms){
+    timerEl.textContent=fmt(ms);
+    timerEl.classList.toggle("urgent", ms<=10000);
+  }
+  function startTimer(){ endTime=Date.now()+cfg.seconds*1000; running=true; lastSec=-1; tickLoop(); }
+  function stopTimer(){ running=false; clearTimeout(timerId); }
+  function tickLoop(){
+    if(!running)return;
+    var ms=Math.max(0, endTime-Date.now());
+    renderTime(ms);
+    var sec=Math.ceil(ms/1000);
+    if(sec!==lastSec){ lastSec=sec; if(ms>0) tick(ms<=10000); }
+    if(ms<=0){ running=false; boom("時間到，任務失敗"); return; }
+    timerId=setTimeout(tickLoop, 100);
   }
 
   function build(){
-    solved=false; board.classList.remove("solved");
+    ended=false; stopTimer();
+    bomb.classList.remove("defused");
     document.getElementById("reveal").classList.remove("show");
-    R=cfg.lightSize;
-    var g=GLOWS[cfg.glow]||GLOWS.green;
-    document.documentElement.style.setProperty("--secret",g[0]);
-    document.documentElement.style.setProperty("--secret-glow",g[1]);
-
-    // 背景
-    if(cfg.bgImage){ surface.classList.add("img"); surface.style.backgroundImage='url("'+cfg.bgImage+'")'; decoy.style.display="none"; }
-    else { surface.classList.remove("img"); surface.style.backgroundImage=""; decoy.style.display="block"; buildDecoy(); }
-
-    // 隱藏內容
-    hidden.innerHTML="";
-    if(cfg.type==="image" && cfg.hiddenImage){ var img=document.createElement("img"); img.src=cfg.hiddenImage; img.alt=""; hidden.appendChild(img); }
-    else if(cfg.type==="text"){ var sp=document.createElement("div"); sp.className="secret"; sp.textContent=cfg.hiddenText; hidden.appendChild(sp); }
-
-    // 關燈
-    hidden.style.setProperty("--r","0px");
-    beam.style.opacity=0;
-
-    // 作答列
-    var showAns = (cfg.type==="text" && cfg.requireAnswer && cfg.hiddenText.trim()!=="");
-    answerRow.classList.toggle("hide",!showAns);
-    ans.value="";
-    hintEl.textContent="用手指當紫外線燈，在畫面上照出隱藏的字";
+    document.getElementById("boom").classList.remove("show");
+    ledTxt.textContent="ARMED";
+    wiresEl.innerHTML="";
+    cfg.wires.forEach(function(w,i){
+      var hex=COLORS[w.color]||"#888";
+      var wire=document.createElement("div"); wire.className="wire"; wire.dataset.i=i;
+      wire.innerHTML='<span class="screw"></span><span class="cable"><span class="half l"></span><span class="half r"></span><span class="spark"></span></span><span class="screw"></span>';
+      wire.querySelector(".half.l").style.background=hex;
+      wire.querySelector(".half.r").style.background=hex;
+      (function(idx){ wire.addEventListener("click",function(){ cut(idx,wire); }); })(i);
+      wiresEl.appendChild(wire);
+    });
+    renderTime(cfg.seconds*1000);
+    hintEl.textContent="剪斷正確的線路來拆除裝置";
+    startTimer();
   }
 
-  function setLight(e){
-    if(solved)return;
+  function cut(idx,wireEl){
+    if(ended)return;
+    if(wireEl.classList.contains("cut"))return;
     ac();
-    var b=board.getBoundingClientRect();
-    var x=Math.max(0,Math.min(b.width, e.clientX-b.left));
-    var y=Math.max(0,Math.min(b.height, e.clientY-b.top));
-    hidden.style.setProperty("--x",x+"px");
-    hidden.style.setProperty("--y",y+"px");
-    hidden.style.setProperty("--r",R+"px");
-    beam.style.left=x+"px"; beam.style.top=y+"px"; beam.style.width=(R*2)+"px"; beam.style.height=(R*2)+"px"; beam.style.opacity=1;
+    wireEl.classList.add("cut");
+    if(idx===cfg.correct){ snip(); defuse(); return; }
+    // 剪錯
+    snip(); buzz();
+    bomb.classList.remove("shake"); void bomb.offsetWidth; bomb.classList.add("shake");
+    if(navigator.vibrate){try{navigator.vibrate(140);}catch(e){}}
+    if(cfg.penalty==="boom"){ stopTimer(); boom("剪錯線路，裝置引爆"); return; }
+    // 扣時間
+    endTime-=cfg.penaltySeconds*1000;
+    showPenalty("-"+cfg.penaltySeconds+"s");
+    var ms=Math.max(0,endTime-Date.now());
+    renderTime(ms);
+    if(ms<=0){ stopTimer(); boom("時間到，任務失敗"); }
   }
-  board.addEventListener("pointerdown",function(e){ setLight(e); });
-  board.addEventListener("pointermove",function(e){ setLight(e); });
+  function showPenalty(txt){ penaltyFlash.textContent=txt; penaltyFlash.classList.remove("show"); void penaltyFlash.offsetWidth; penaltyFlash.classList.add("show"); }
 
-  /* 作答 */
-  function norm(s){ return String(s||"").toUpperCase().replace(/\s+/g,"").trim(); }
-  function submit(){
-    if(!norm(ans.value)){ ans.focus(); return; }
-    if(norm(ans.value)===norm(cfg.hiddenText)){ solved=true; board.classList.add("solved"); hintEl.textContent="顯影成功！"; winSnd(); setTimeout(showReveal,500); }
-    else { buzz(); ans.classList.remove("wrong"); void ans.offsetWidth; ans.classList.add("wrong"); hintEl.textContent="不對，再仔細照照看"; if(navigator.vibrate){try{navigator.vibrate(120);}catch(e){}} }
+  function defuse(){
+    ended=true; stopTimer();
+    bomb.classList.add("defused"); ledTxt.textContent="DEFUSED";
+    hintEl.textContent="拆除成功！";
+    defuseSnd();
+    setTimeout(showReveal,650);
   }
-  document.getElementById("submitBtn").addEventListener("click",submit);
-  ans.addEventListener("keydown",function(e){ if(e.key==="Enter")submit(); });
+  function boom(sub){
+    ended=true; stopTimer();
+    document.getElementById("boomSub").textContent=sub||"任務失敗";
+    boomSnd();
+    document.body.classList.remove("boom-flash"); void document.body.offsetWidth; document.body.classList.add("boom-flash");
+    if(navigator.vibrate){try{navigator.vibrate([90,60,160]);}catch(e){}}
+    document.getElementById("boom").classList.add("show");
+  }
+
+  document.getElementById("restartBtn").addEventListener("click",build);
+  document.getElementById("retryBtn").addEventListener("click",build);
 
   /* 揭示 */
   var reveal=document.getElementById("reveal"), paperHolder=document.getElementById("paperHolder"), captionEl=document.getElementById("caption");
@@ -378,7 +425,7 @@
     paperHolder.innerHTML="";
     if(cfg.clueImage){ paperHolder.style.display="block"; var img=document.createElement("img"); img.src=cfg.clueImage; img.alt="線索"; img.addEventListener("click",function(){openLightbox(cfg.clueImage);}); paperHolder.appendChild(img); }
     else if(cfg.caption){ paperHolder.style.display="none"; }
-    else { paperHolder.style.display="block"; var e=document.createElement("div"); e.className="paper-empty"; e.textContent="顯影成功！"; paperHolder.appendChild(e); }
+    else { paperHolder.style.display="block"; var e=document.createElement("div"); e.className="paper-empty"; e.textContent="拆除成功！"; paperHolder.appendChild(e); }
     captionEl.textContent=cfg.caption||""; captionEl.style.display=cfg.caption?"block":"none";
     reveal.classList.add("show");
   }
@@ -387,7 +434,7 @@
   function openLightbox(src){ lightboxImg.src=src; lightbox.classList.add("show"); }
   lightbox.addEventListener("click",function(){ lightbox.classList.remove("show"); });
 
-  /* 齒輪 → 後台 */
+  /* 齒輪 → 後台（進後台時暫停倒數） */
   var gear=document.getElementById("gear"), holdTimer=null;
   function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(openGate,600); }
   function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
@@ -396,62 +443,66 @@
 
   /* 密碼框 */
   var gate=document.getElementById("gate"), gateBox=document.getElementById("gateBox"), gateInput=document.getElementById("gateInput"), gateErr=document.getElementById("gateErr");
-  function openGate(){ cancelHold(); gateErr.textContent=""; gateInput.value=""; gate.classList.add("show"); setTimeout(function(){try{gateInput.focus();}catch(e){}},60); }
-  function closeGate(){ gate.classList.remove("show"); }
-  function tryGate(){ if(gateInput.value===cfg.adminPass){ closeGate(); openAdmin(); } else { gateErr.textContent="密碼錯誤"; gateBox.classList.remove("shake-x"); void gateBox.offsetWidth; gateBox.classList.add("shake-x"); gateInput.value=""; try{gateInput.focus();}catch(e){} } }
+  function openGate(){ cancelHold(); stopTimer(); gateErr.textContent=""; gateInput.value=""; gate.classList.add("show"); setTimeout(function(){try{gateInput.focus();}catch(e){}},60); }
+  function closeGate(){ gate.classList.remove("show"); if(!ended) startTimer(); }
+  function tryGate(){ if(gateInput.value===cfg.adminPass){ gate.classList.remove("show"); openAdmin(); } else { gateErr.textContent="密碼錯誤"; gateBox.classList.remove("shake-x"); void gateBox.offsetWidth; gateBox.classList.add("shake-x"); gateInput.value=""; try{gateInput.focus();}catch(e){} } }
   document.getElementById("gateOk").addEventListener("click",tryGate);
   document.getElementById("gateCancel").addEventListener("click",closeGate);
   gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
 
   /* 後台 */
   var admin=document.getElementById("admin");
-  var typeSeg=document.getElementById("typeSeg"), glowSeg=document.getElementById("glowSeg"), sizeSeg=document.getElementById("sizeSeg");
-  var textFields=document.getElementById("textFields"), imageFields=document.getElementById("imageFields");
-  var hiddenTextInput=document.getElementById("hiddenTextInput"), reqSwitch=document.getElementById("reqSwitch");
-  var hiddenFile=document.getElementById("hiddenFile"), hiddenUrl=document.getElementById("hiddenUrl"), hiddenPreview=document.getElementById("hiddenPreview"), hiddenPrevImg=document.getElementById("hiddenPrevImg");
-  var bgFile=document.getElementById("bgFile"), bgUrl=document.getElementById("bgUrl"), bgPreview=document.getElementById("bgPreview"), bgImg=document.getElementById("bgImg");
+  var secInput=document.getElementById("secInput"), wireEditor=document.getElementById("wireEditor");
+  var penaltySeg=document.getElementById("penaltySeg"), penaltySecRow=document.getElementById("penaltySecRow"), penaltySecInput=document.getElementById("penaltySecInput");
   var capInput=document.getElementById("capInput");
   var clueFile=document.getElementById("clueFile"), clueUrl=document.getElementById("clueUrl"), cluePreview=document.getElementById("cluePreview"), clueImg=document.getElementById("clueImg");
   var soundSwitch=document.getElementById("soundSwitch"), adminPassInput=document.getElementById("adminPassInput");
   var draft=null;
 
-  function bindImg(fileEl,urlEl,prevBox,prevImg,key){
-    fileEl.addEventListener("change",function(){ var f=fileEl.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ draft[key]=r.result; urlEl.value=""; prevImg.src=r.result; prevBox.classList.add("show"); }; r.readAsDataURL(f); });
-    urlEl.addEventListener("input",function(){ var v=urlEl.value.trim(); if(v){ draft[key]=v; prevImg.src=v; prevBox.classList.add("show"); } else if(!fileEl.files.length){ draft[key]=""; prevBox.classList.remove("show"); } });
-  }
-  bindImg(hiddenFile,hiddenUrl,hiddenPreview,hiddenPrevImg,"hiddenImage");
-  bindImg(bgFile,bgUrl,bgPreview,bgImg,"bgImage");
-  bindImg(clueFile,clueUrl,cluePreview,clueImg,"clueImage");
-
-  function openAdmin(){ draft={ type:cfg.type, hiddenText:cfg.hiddenText, hiddenImage:cfg.hiddenImage, requireAnswer:cfg.requireAnswer, glow:cfg.glow, lightSize:cfg.lightSize, bgImage:cfg.bgImage, caption:cfg.caption, clueImage:cfg.clueImage, sound:cfg.sound, adminPass:cfg.adminPass }; renderAdmin(); admin.classList.add("show"); }
-  function setPrev(box,img,val){ if(val){ img.src=val; box.classList.add("show"); } else box.classList.remove("show"); }
+  function openAdmin(){ draft={ seconds:cfg.seconds, wires:cfg.wires.map(function(w){return {color:w.color};}), correct:cfg.correct, penalty:cfg.penalty, penaltySeconds:cfg.penaltySeconds, caption:cfg.caption, clueImage:cfg.clueImage, sound:cfg.sound, adminPass:cfg.adminPass }; renderAdmin(); admin.classList.add("show"); }
   function renderAdmin(){
-    Array.prototype.forEach.call(typeSeg.children,function(b){ b.classList.toggle("on",b.dataset.t===draft.type); });
-    textFields.classList.toggle("hide",draft.type!=="text");
-    imageFields.classList.toggle("hide",draft.type!=="image");
-    hiddenTextInput.value=draft.hiddenText;
-    reqSwitch.classList.toggle("on",!!draft.requireAnswer);
-    Array.prototype.forEach.call(glowSeg.children,function(b){ b.classList.toggle("on",b.dataset.g===draft.glow); });
-    Array.prototype.forEach.call(sizeSeg.children,function(b){ b.classList.toggle("on",parseInt(b.dataset.r,10)===draft.lightSize); });
-    setPrev(hiddenPreview,hiddenPrevImg,draft.hiddenImage); hiddenUrl.value=(draft.hiddenImage&&draft.hiddenImage.indexOf("data:")!==0)?draft.hiddenImage:"";
-    setPrev(bgPreview,bgImg,draft.bgImage); bgUrl.value=(draft.bgImage&&draft.bgImage.indexOf("data:")!==0)?draft.bgImage:"";
-    setPrev(cluePreview,clueImg,draft.clueImage); clueUrl.value=(draft.clueImage&&draft.clueImage.indexOf("data:")!==0)?draft.clueImage:"";
+    secInput.value=draft.seconds;
+    renderWires();
+    Array.prototype.forEach.call(penaltySeg.children,function(b){ b.classList.toggle("on",b.dataset.p===draft.penalty); });
+    penaltySecRow.classList.toggle("hide",draft.penalty!=="deduct");
+    penaltySecInput.value=draft.penaltySeconds;
     capInput.value=draft.caption||"";
+    if(draft.clueImage){ clueImg.src=draft.clueImage; cluePreview.classList.add("show"); clueUrl.value=(draft.clueImage.indexOf("data:")!==0)?draft.clueImage:""; } else { cluePreview.classList.remove("show"); clueUrl.value=""; }
     soundSwitch.classList.toggle("on",!!draft.sound);
     adminPassInput.value=draft.adminPass||"";
   }
-  typeSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.type=b.dataset.t; renderAdmin(); });
-  glowSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.glow=b.dataset.g; renderAdmin(); });
-  sizeSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.lightSize=parseInt(b.dataset.r,10); renderAdmin(); });
-  hiddenTextInput.addEventListener("input",function(){ draft.hiddenText=hiddenTextInput.value; });
-  reqSwitch.addEventListener("click",function(){ draft.requireAnswer=!draft.requireAnswer; reqSwitch.classList.toggle("on",draft.requireAnswer); });
+  function renderWires(){
+    wireEditor.innerHTML="";
+    draft.wires.forEach(function(w,i){
+      var row=document.createElement("div"); row.className="wrow";
+      var sw=document.createElement("div"); sw.className="swatches";
+      COLOR_KEYS.forEach(function(ck){
+        var d=document.createElement("div"); d.className="sw"+(w.color===ck?" on":""); d.style.background=COLORS[ck]; d.title=ck;
+        d.addEventListener("click",function(){ w.color=ck; renderWires(); });
+        sw.appendChild(d);
+      });
+      var cbtn=document.createElement("button"); cbtn.type="button"; cbtn.className="correct-btn"+(draft.correct===i?" on":""); cbtn.textContent=draft.correct===i?"★ 正解":"設為正解";
+      cbtn.addEventListener("click",function(){ draft.correct=i; renderWires(); });
+      var del=document.createElement("button"); del.type="button"; del.className="wdel"; del.textContent="✕";
+      del.addEventListener("click",function(){ if(draft.wires.length<=3){toast("最少 3 條");return;} draft.wires.splice(i,1); if(draft.correct>=draft.wires.length)draft.correct=0; else if(draft.correct>i)draft.correct--; renderWires(); });
+      row.appendChild(sw); row.appendChild(cbtn); row.appendChild(del);
+      wireEditor.appendChild(row);
+    });
+  }
+  secInput.addEventListener("input",function(){ draft.seconds=parseInt(secInput.value,10)||0; });
+  penaltySeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.penalty=b.dataset.p; renderAdmin(); });
+  penaltySecInput.addEventListener("input",function(){ draft.penaltySeconds=parseInt(penaltySecInput.value,10)||0; });
   capInput.addEventListener("input",function(){ draft.caption=capInput.value; });
+  document.getElementById("addWire").addEventListener("click",function(){ if(draft.wires.length>=6){toast("最多 6 條");return;} draft.wires.push({color:COLOR_KEYS[draft.wires.length%COLOR_KEYS.length]}); renderWires(); });
+  clueFile.addEventListener("change",function(){ var f=clueFile.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ draft.clueImage=r.result; clueUrl.value=""; clueImg.src=r.result; cluePreview.classList.add("show"); }; r.readAsDataURL(f); });
+  clueUrl.addEventListener("input",function(){ var v=clueUrl.value.trim(); if(v){ draft.clueImage=v; clueImg.src=v; cluePreview.classList.add("show"); } else if(!clueFile.files.length){ draft.clueImage=""; cluePreview.classList.remove("show"); } });
   soundSwitch.addEventListener("click",function(){ draft.sound=!draft.sound; soundSwitch.classList.toggle("on",draft.sound); });
   adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
 
   function commit(){
-    cfg.type=draft.type; cfg.hiddenText=draft.hiddenText; cfg.hiddenImage=draft.hiddenImage; cfg.requireAnswer=draft.requireAnswer;
-    cfg.glow=draft.glow; cfg.lightSize=draft.lightSize; cfg.bgImage=draft.bgImage; cfg.caption=draft.caption; cfg.clueImage=draft.clueImage; cfg.sound=draft.sound;
+    cfg.seconds=draft.seconds; cfg.wires=draft.wires.map(function(w){return {color:w.color};}); cfg.correct=draft.correct;
+    cfg.penalty=draft.penalty; cfg.penaltySeconds=draft.penaltySeconds;
+    cfg.caption=draft.caption; cfg.clueImage=draft.clueImage; cfg.sound=draft.sound;
     cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"9633";
     normalize(cfg); save(cfg); build();
   }
