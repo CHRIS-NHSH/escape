@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>用 AI 做出互動解謎機關 · 教學</title>
+<title>用 AI 做出闖關機關 · 教學</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -112,11 +112,11 @@
   #slideNav button{border:none;background:transparent;color:var(--txt);font-size:18px;cursor:pointer;width:40px;height:40px;border-radius:50%;font-family:var(--cjk)}
   #slideNav button:hover{background:rgba(255,255,255,.08);color:var(--brass)}
   #slideNav .count{font-family:var(--display);font-size:14px;color:var(--txt-dim);min-width:58px;text-align:center}
-  body.present{overflow:hidden}
+  body.present{overflow:hidden;background:var(--slate)}
   body.present .wrap{max-width:none;margin:0;padding:0}
   body.present .toc,body.present .back,body.present footer,body.present #presentBtn{display:none}
   body.present header,body.present section{display:none}
-  body.present .slide-active{display:block;position:fixed;inset:0;overflow:auto;padding:6vh 8vw 13vh;margin:0;animation:slidein .25s ease}
+  body.present .slide-active{display:block;position:fixed;inset:0;overflow:auto;padding:6vh 8vw 13vh;margin:0;background-color:var(--slate);background-image:radial-gradient(120% 70% at 50% 0%, #29313a 0%, var(--slate) 46%, var(--slate2) 100%);animation:slidein .25s ease}
   @keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   body.present .slide-active>*{max-width:920px;margin-left:auto;margin-right:auto}
   body.present .slide-active h1{font-size:42px}
@@ -130,8 +130,8 @@
 <div class="wrap">
   <header>
     <div class="kicker">Student Guide</div>
-    <h1>用 AI 做出互動解謎機關</h1>
-    <p class="lede">如何用 AI 做出像範例庫那樣的互動機關。重點不在會不會叫 AI 生程式，而在想不想得清楚一個好玩的機關到底該長什麼樣。</p>
+    <h1>用 AI 做出闖關機關</h1>
+    <p class="lede">如何用 AI 做出像範例庫那樣的互動機關。重點不在會不會叫 AI 生程式，而在想不想得清楚——一個好玩的機關到底該長什麼樣。</p>
     <a class="back" href="../">← 回機關範例庫</a>
   </header>
 
@@ -146,7 +146,7 @@
 
   <section id="idea">
     <h2><span class="n">①</span>核心觀念</h2>
-    <p>與其叫 AI 從零生出一整個遊戲，不如先把設計想清楚，再請它實作。為什麼？因為 AI 生出來的東西<strong>「看起來會動」不代表真的對</strong>——要做的，是把想法講清楚、再一一驗收。這要訓練的，是兩件帶得走的能力：</p>
+    <p>與其叫 AI 從零生出一整個遊戲，不如先把設計想清楚，再請它實作。為什麼？因為 AI 生出來的東西<strong>「看起來會動」不代表真的對</strong>——要做的，是把想法講清楚、再一一驗收。這頁要練的，是兩件帶得走的能力：</p>
     <div class="card">
       <p style="margin:0 0 8px"><strong>一、把設計想清楚</strong>，再開口問 AI。先寫好規格，AI 才生得準（見下方規格）。</p>
       <p style="margin:0"><strong>二、會驗收自己的成果</strong>。會測、會回報問題、能說明自己做了什麼。</p>
