@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>暗門櫃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1c2128; --slate2:#161a20;
+    --graphite:#2a3139; --graphite-lo:#1f242b;
+    --brass:#d9b878; --brass-mid:#b8935a; --brass-lo:#8a6d3f;
+    --amber:#ffce78;
+    --txt:#e7e3da; --txt-dim:#9aa1a9;
+    --line:rgba(255,255,255,.08);
+    --paper:#f4ead8;
+    --display:"Chakra Petch", system-ui, sans-serif;
+    --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:var(--cjk);color:var(--txt);overflow:hidden;user-select:none;-webkit-user-select:none;
+    background:radial-gradient(120% 90% at 50% 16%, #29313a 0%, var(--slate) 44%, var(--slate2) 100%);}
+  .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px}
+
+  .gear{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--txt-dim);background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;z-index:40;transition:color .2s,background .2s}
+  .gear:active{color:var(--brass)}
+  .gear svg{width:24px;height:24px}
+  .gear .ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--brass);clip-path:inset(0 0 100% 0);opacity:.9}
+  .gear.holding .ring{clip-path:inset(0 0 0 0);transition:clip-path .6s linear}
+
+  .topbar{display:flex;align-items:center;gap:18px}
+  .brandline{font-family:var(--display);font-weight:600;letter-spacing:3px;font-size:12px;color:var(--brass-mid);text-transform:uppercase}
+  .progress{font-family:var(--display);font-size:13px;letter-spacing:1px;color:var(--txt-dim)}
+  .progress b{color:var(--brass)}
+
+  /* 櫃子 */
+  .cabinet{width:min(94vw,440px);background:linear-gradient(180deg,#3a2c1c,#241a10);border:1px solid rgba(0,0,0,.5);border-radius:14px;padding:14px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 22px 44px -22px rgba(0,0,0,.75)}
+  .shelves{display:grid;gap:8px;margin:0 auto}
+  .slot{position:relative;aspect-ratio:1;background:linear-gradient(180deg,#2a2013,#1a1309);border:1px solid rgba(255,255,255,.05);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -10px 16px rgba(0,0,0,.4)}
+  .slot .num{position:absolute;top:4px;left:7px;font-family:var(--display);font-size:12px;color:var(--brass-mid);opacity:.85}
+  .slot .drop{width:76%;height:76%;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px dashed rgba(217,184,120,.22);
+    font-size:clamp(20px,7vw,34px);overflow:hidden}
+  .slot.over .drop{border-color:var(--amber);background:rgba(255,206,120,.08)}
+  .slot.filled .drop{border-style:solid;border-color:var(--brass);background:rgba(255,206,120,.06);box-shadow:inset 0 0 14px rgba(255,206,120,.3)}
+  .slot.bad{animation:shakex .4s}
+  .slot .drop img{width:100%;height:100%;object-fit:contain;display:block}
+
+  .vault{position:relative;margin-top:12px;height:60px;border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.45)}
+  .vault .glow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);letter-spacing:4px;font-weight:700;color:#3a2a10;
+    background:radial-gradient(circle at 50% 45%, rgba(255,206,120,.65), rgba(150,100,30,.2) 70%)}
+  .vault .door{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);letter-spacing:4px;color:var(--txt-dim);
+    background:linear-gradient(180deg,#4a3820,#2a2012);border-right:1px solid rgba(0,0,0,.5);transform-origin:left center;
+    transition:transform .75s cubic-bezier(.4,.1,.2,1)}
+  .vault .door.open{transform:perspective(700px) rotateY(-108deg)}
+
+  .tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;width:min(94vw,440px);min-height:60px}
+  .tray-empty{color:var(--txt-dim);font-size:14px;line-height:1.7;text-align:center;padding:16px 18px;border:2px dashed var(--line);border-radius:12px}
+  .item{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:clamp(22px,7.5vw,32px);
+    background:linear-gradient(180deg,#f4ead8,#e6d6b6);color:#2b2210;border-radius:12px;box-shadow:inset 0 0 0 2px rgba(184,147,90,.4);cursor:grab;touch-action:none;overflow:hidden}
+  .item img{width:100%;height:100%;object-fit:contain;display:block}
+  .item.used{display:none}
+  .item.dragging{opacity:.25}
+  .drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-50%);width:56px;height:56px;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(22px,7.5vw,32px);background:linear-gradient(180deg,#f7eeda,#e6d6b6);color:#2b2210;border-radius:12px;box-shadow:0 12px 22px rgba(0,0,0,.55), inset 0 0 0 2px rgba(184,147,90,.5);overflow:hidden}
+  .drag-ghost img{width:100%;height:100%;object-fit:contain;display:block}
+
+  .hint{min-height:22px;color:var(--txt-dim);font-size:15px;letter-spacing:.5px;text-align:center;padding:0 16px}
+  .pill{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:11px 24px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .pill:active{background:rgba(255,255,255,.1)}
+  .pill:disabled{opacity:.45;cursor:default}
+  .pill.ready{border-color:var(--brass);color:var(--brass);background:rgba(217,184,120,.12)}
+  .pill svg{width:16px;height:16px;color:var(--brass)}
+
+  /* 揭示 */
+  .reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 40%, rgba(255,206,120,.14), rgba(0,0,0,.8) 60%);backdrop-filter:blur(3px);padding:24px}
+  .reveal.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .case{position:relative;max-width:520px;width:100%;border-radius:20px;padding:20px;text-align:center;background:linear-gradient(180deg,#3a2e1a,#241c10);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 70px -20px rgba(0,0,0,.8);transform:translateY(14px) scale(.96);opacity:0}
+  .reveal.show .case{animation:rise .5s cubic-bezier(.2,.9,.3,1.2) .08s forwards}
+  @keyframes rise{to{transform:none;opacity:1}}
+  .case .tag{font-family:var(--display);letter-spacing:3px;font-size:11px;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
+  .paper{width:100%;border-radius:8px;background:var(--paper);overflow:hidden}
+  .paper img{width:100%;display:block;cursor:zoom-in}
+  .paper-empty{min-height:120px;display:flex;align-items:center;justify-content:center;color:#7a6a4f;font-size:15px;padding:24px}
+  .caption{margin-top:14px;color:#f7e9cf;font-size:16px;line-height:1.7;white-space:pre-wrap}
+  .case .close{margin:16px auto 2px;display:block;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff;padding:10px 26px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .lightbox{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);padding:12px}
+  .lightbox.show{display:flex}.lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+  /* 密碼框 */
+  .gate{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);backdrop-filter:blur(3px)}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:320px;padding:24px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .gate-title{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:16px;text-align:center}
+  .gate-sub{color:var(--txt-dim);font-size:12px;text-align:center;margin:6px 0 16px}
+  .gate-input{width:100%;height:54px;text-align:center;font-size:22px;letter-spacing:6px;font-family:var(--display);background:#13171c;border:1px solid var(--line);border-radius:12px;color:var(--brass)}
+  .gate-input:focus{outline:none;border-color:var(--brass-mid)}
+  .gate-err{height:18px;color:#e8857a;font-size:13px;text-align:center;margin:9px 0 3px}
+  .gate-actions{display:flex;gap:10px}
+  .gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .shake-x{animation:shakex .35s}
+  @keyframes shakex{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  /* 後台 */
+  .admin{position:fixed;inset:0;z-index:50;display:none;background:linear-gradient(180deg,#13171c,#0e1115);overflow:auto;padding:26px 20px 60px}
+  .admin.show{display:block}
+  .admin-wrap{max-width:560px;margin:0 auto}
+  .admin h1{font-family:var(--display);font-weight:700;letter-spacing:1px;font-size:22px;margin:6px 0 4px;color:#fff}
+  .admin .sub{color:var(--txt-dim);font-size:13px;margin-bottom:24px}
+  .field{margin-bottom:24px}
+  .field>label{display:block;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:10px}
+  .field .desc{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .url-input{width:100%;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:15px;font-family:var(--cjk)}
+  .url-input:focus{outline:none;border-color:var(--brass-mid)}
+  textarea.url-input{min-height:120px;resize:vertical;line-height:1.7}
+  .toggle{display:flex;align-items:center;gap:12px}
+  .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
+  .switch.on{background:var(--brass-mid)}.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.switch.on i{left:25px}
+  .filebtn{display:inline-flex;align-items:center;gap:8px;background:#1c2026;border:1px solid var(--line);color:var(--txt);padding:12px 18px;border-radius:11px;font-size:14px;cursor:pointer}
+  input[type=file]{display:none}
+  .preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#15181d;display:none}
+  .preview.show{display:block}.preview img{width:100%;border-radius:8px;display:block}
+  .chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#1c2026;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:14px;color:var(--txt-dim)}
+  .chip b{color:var(--brass);font-weight:600}
+  .chip img{width:20px;height:20px;object-fit:contain;border-radius:3px}
+  .actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line);z-index:62}
+  .saved.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="gear" id="gear" title="長按進入後台">
+  <span class="ring"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</div>
+
+<div class="stage" id="stage">
+  <div class="topbar">
+    <span class="brandline">CABINET · 暗門櫃</span>
+    <span class="progress" id="progress"></span>
+  </div>
+  <div class="cabinet" id="cabinet">
+    <div class="shelves" id="shelves"></div>
+    <div class="vault">
+      <div class="glow">OPEN</div>
+      <div class="door" id="door">🔒 暗門</div>
+    </div>
+  </div>
+  <div class="tray" id="tray"></div>
+  <div class="hint" id="hint">把物品拖到對應號碼的櫃位</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <button class="pill" id="verifyBtn" style="display:none" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>驗證</button>
+    <button class="pill" id="restartBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>重新開始</button>
+  </div>
+</div>
+
+<div class="reveal" id="reveal">
+  <div class="case">
+    <div class="tag">CLEARED · 暗門開啟</div>
+    <div class="paper" id="paperHolder"></div>
+    <div class="caption" id="caption"></div>
+    <button class="close" id="closeReveal">收起</button>
+  </div>
+</div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt="放大"></div>
+
+<div class="gate" id="gate">
+  <div class="gate-box" id="gateBox">
+    <div class="gate-title">後台密碼</div>
+    <div class="gate-sub">請輸入密碼以進入設定</div>
+    <input class="gate-input" id="gateInput" type="password" autocomplete="off" placeholder="••••">
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-actions"><button class="gate-cancel" id="gateCancel">取消</button><button class="gate-ok" id="gateOk">進入</button></div>
+  </div>
+</div>
+
+<div class="admin" id="admin">
+  <div class="admin-wrap">
+    <h1>後台設定</h1>
+    <div class="sub">設定櫃子大小與各號碼要放的物品，玩家不會看到這個畫面。</div>
+
+    <div class="field">
+      <label>櫃子大小</label>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1"><input class="url-input" id="rowsInput" type="number" min="1" max="6" inputmode="numeric"><div class="desc">直向（往下幾格）</div></div>
+        <div style="flex:1"><input class="url-input" id="colsInput" type="number" min="1" max="6" inputmode="numeric"><div class="desc">橫向（往右幾格）</div></div>
+      </div>
+      <div class="desc">預設 3 × 3。格子「由上到下」編號：先把一直行由上往下數完，再換右邊下一行。</div>
+    </div>
+
+    <div class="field">
+      <label>各號碼要放的物品（一行一組，可只填部分格子）</label>
+      <textarea class="url-input" id="assignsInput" placeholder="格式：號碼 = 圖片連結&#10;例如：&#10;2 = https://.../milk.png&#10;4 = https://.../bread.png&#10;（也可放 emoji 或文字，例如 6 = 🍎）"></textarea>
+      <div class="chips" id="chips"></div>
+      <div class="desc">左邊是格子號碼，右邊是要放進去的物品（圖片連結、emoji 或文字）。沒填到的號碼就是空格、不用放。玩家要把每個物品拖到對應號碼的格子。</div>
+    </div>
+
+    <div class="field">
+      <label>嚴格驗證</label>
+      <div class="toggle"><div class="switch" id="strictSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">開啟：可任意擺放、全部放好按「驗證」才一次判定，錯就整批退回（沒有單格提示）。關閉：放對才卡住、放錯立即彈開。</span></div>
+    </div>
+
+    <div class="field">
+      <label>成功後說明文字（選填）</label>
+      <textarea class="url-input" id="capInput" placeholder="例如：抽屜裡有下一個線索。" style="min-height:70px"></textarea>
+    </div>
+    <div class="field">
+      <label>成功後線索圖片（選填）</label>
+      <label class="filebtn" for="clueFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上傳圖片（僅限本機使用）</label>
+      <input type="file" id="clueFile" accept="image/*">
+      <input class="url-input" id="clueUrl" placeholder="或貼上圖片網址 https://..." style="margin-top:10px">
+      <div class="preview" id="cluePreview"><img id="clueImg" alt="預覽"></div>
+    </div>
+
+    <div class="field">
+      <label>音效</label>
+      <div class="toggle"><div class="switch" id="soundSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">歸位與開門音效</span></div>
+    </div>
+    <div class="field">
+      <label>後台密碼</label>
+      <input class="url-input" id="adminPassInput" type="text" autocomplete="off" placeholder="進入後台用的密碼">
+      <div class="desc">留空會自動回復預設。</div>
+    </div>
+
+    <div class="actions"><button class="btn ghost" id="previewBtn">預覽前台</button><button class="btn ghost" id="shareBtn">產生分享連結</button>
+      <button class="btn primary" id="saveBtn">儲存並返回</button></div>
+  </div>
+</div>
+
+<div class="saved" id="toast">已儲存</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULT_ASSIGNS=[{n:2,item:"🥛"},{n:4,item:"🍞"},{n:6,item:"🍎"},{n:8,item:"🥫"}];
+  function cloneAssigns(a){ return (a||[]).map(function(x){return {n:x.n,item:x.item};}); }
+
+  var KEY="cabinet.config.v1", mem=null;
+  function load(){ try{var s=localStorage.getItem(KEY); if(s)return JSON.parse(s);}catch(e){} return mem; }
+  function save(c){ mem=c; try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){} }
+
+  /* ---------- 分享連結：把設定編碼進網址（無後端） ---------- */
+  function _b64encode(str){
+    var bytes=new TextEncoder().encode(str), bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function _b64decode(s){
+    s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4)s+="=";
+    var bin=atob(s), bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function encodeCfg(c){ try{ return _b64encode(JSON.stringify(c)); }catch(e){ return ""; } }
+  function decodeCfg(s){ try{ return JSON.parse(_b64decode(s)); }catch(e){ return null; } }
+  function getSharedCfg(){
+    try{ var m=(location.search+location.hash).match(/[?#&]c=([^&]+)/); if(m&&m[1]) return decodeCfg(decodeURIComponent(m[1])); }catch(e){}
+    return null;
+  }
+  function shareURL(){ return location.origin+location.pathname+"?c="+encodeURIComponent(encodeCfg(cfg)); }
+
+  var cfg = getSharedCfg() || load() || { rows:3, cols:3, assigns:cloneAssigns(DEFAULT_ASSIGNS), strict:false, caption:"", clueImage:"", sound:true, adminPass:"9633" };
+
+  function clampInt(v,lo,hi,def){ v=parseInt(v,10); if(isNaN(v))return def; return Math.max(lo,Math.min(hi,v)); }
+  function isImg(v){ return /^(https?:|data:)/i.test(v) || /\.(png|jpe?g|gif|webp|svg|bmp)(\?|#|$)/i.test(v); }
+  function parseAssigns(raw){
+    var seen={};
+    if(Array.isArray(raw)){
+      raw.forEach(function(a){ if(!a)return; var n=parseInt(a.n,10); var item=(a.item!=null)?String(a.item).trim():""; if(!n||!item)return; seen[n]=item; });
+    }else{
+      String(raw||"").split(/\n+/).forEach(function(ln){
+        ln=ln.trim(); if(!ln)return;
+        var idx=ln.search(/[=｜|→➜:：;；]/); if(idx<0)return;
+        var n=parseInt(ln.slice(0,idx).trim(),10); var item=ln.slice(idx+1).trim();
+        if(!n||!item)return; seen[n]=item;
+      });
+    }
+    var out=[]; Object.keys(seen).forEach(function(k){ out.push({n:parseInt(k,10), item:seen[k]}); });
+    out.sort(function(a,b){return a.n-b.n;});
+    return out;
+  }
+  function normalize(c){
+    c.rows=clampInt(c.rows,1,6,3); c.cols=clampInt(c.cols,1,6,3);
+    var total=c.rows*c.cols;
+    c.assigns=parseAssigns(c.assigns).filter(function(a){return a.n>=1&&a.n<=total;});
+    c.strict=c.strict===true;
+    c.caption=c.caption||""; c.clueImage=c.clueImage||""; c.sound=c.sound!==false;
+    if(typeof c.adminPass!=="string"||c.adminPass==="")c.adminPass="9633";
+  }
+  normalize(cfg);
+
+  /* 音效 */
+  var actx=null;
+  function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return actx; }
+  function tone(f,d,t,g){ if(!cfg.sound)return; var c=ac(); if(!c)return; var o=c.createOscillator(),gn=c.createGain();o.type=t||"sine";o.frequency.value=f;gn.gain.value=g||0.05;o.connect(gn);gn.connect(c.destination);var tt=c.currentTime;gn.gain.exponentialRampToValueAtTime(0.0001,tt+d);o.start(tt);o.stop(tt+d);}
+  function clickSnd(){ tone(520,0.08,"sine",0.05); setTimeout(function(){tone(720,0.1,"sine",0.05);},70); }
+  function missSnd(){ tone(150,0.2,"sawtooth",0.05); }
+  function openSnd(){ tone(300,0.12,"square",0.04); setTimeout(function(){tone(240,0.5,"sawtooth",0.05);},120); }
+  function winSnd(){ tone(523,0.16,"sine",0.06); setTimeout(function(){tone(659,0.16,"sine",0.06);},110); setTimeout(function(){tone(784,0.16,"sine",0.06);},220); setTimeout(function(){tone(1047,0.32,"sine",0.06);},330); }
+
+  /* 遊戲 */
+  var shelvesEl=document.getElementById("shelves"), trayEl=document.getElementById("tray"),
+      cabinet=document.getElementById("cabinet"), door=document.getElementById("door"),
+      hintEl=document.getElementById("hint"), progressEl=document.getElementById("progress"), verifyBtn=document.getElementById("verifyBtn");
+  var slotsEls={}, assignsMap={}, filled=0, placedCount=0, targetCount=0;
+
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0;var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+  function updateProgress(){ var c=cfg.strict?placedCount:filled; progressEl.innerHTML=(cfg.strict?'已放':'歸位')+' <b>'+c+'</b> / '+targetCount; }
+  function renderItem(host,val){
+    host.innerHTML="";
+    if(isImg(val)){ var img=document.createElement("img"); img.src=val; img.alt=""; host.appendChild(img); }
+    else { host.textContent=val; }
+  }
+
+  function build(){
+    door.classList.remove("open");
+    var rows=cfg.rows, cols=cfg.cols;
+    assignsMap={}; cfg.assigns.forEach(function(a){ assignsMap[a.n]=a.item; });
+    targetCount=cfg.assigns.length; filled=0; placedCount=0;
+    shelvesEl.innerHTML=""; slotsEls={};
+    shelvesEl.style.gridTemplateColumns="repeat("+cols+",1fr)";
+    shelvesEl.style.width="min(100%,"+(cols*118)+"px)";
+    for(var r=0;r<rows;r++){
+      for(var c=0;c<cols;c++){
+        var n=c*rows+r+1;   /* 由上到下（先往下數完一直行，再換下一行） */
+        var s=document.createElement("div"); s.className="slot"; s.dataset.n=n;
+        s.innerHTML='<div class="num">'+n+'</div><div class="drop"></div>';
+        s.addEventListener("click",function(){ removePlaced(this); });
+        shelvesEl.appendChild(s); slotsEls[n]=s;
+      }
+    }
+    trayEl.innerHTML="";
+    if(targetCount===0){
+      var e=document.createElement("div"); e.className="tray-empty"; e.textContent="尚未指定任何物品。長按右上齒輪，在後台用「號碼 = 圖片連結」設定。";
+      trayEl.appendChild(e); updateProgress(); hintEl.textContent=""; verifyBtn.style.display="none";
+      document.getElementById("reveal").classList.remove("show"); return;
+    }
+    var order=cfg.assigns.map(function(a){return a.item;});
+    shuffle(order);
+    order.forEach(function(val){
+      var it=document.createElement("div"); it.className="item"; it.dataset.val=val; renderItem(it,val);
+      attachDrag(it); trayEl.appendChild(it);
+    });
+    updateProgress();
+    if(cfg.strict){ verifyBtn.style.display="inline-flex"; verifyBtn.disabled=true; verifyBtn.classList.remove("ready"); hintEl.textContent="把物品放進格子，全部放好後按「驗證」"; }
+    else { verifyBtn.style.display="none"; hintEl.textContent="把物品拖到對應號碼的櫃位"; }
+    document.getElementById("reveal").classList.remove("show");
+  }
+
+  /* 指標拖曳 */
+  var dragging=null;
+  function attachDrag(el){ el.addEventListener("pointerdown",function(e){ startDrag(e,el); }); }
+  function startDrag(e,el){
+    if(el.classList.contains("used"))return;
+    e.preventDefault(); ac();
+    var ghost=document.createElement("div"); ghost.className="drag-ghost"; renderItem(ghost, el.dataset.val);
+    document.body.appendChild(ghost);
+    dragging={el:el, ghost:ghost};
+    el.classList.add("dragging");
+    moveGhost(e.clientX,e.clientY);
+    document.addEventListener("pointermove",onMove);
+    document.addEventListener("pointerup",onUp);
+    document.addEventListener("pointercancel",onUp);
+  }
+  function moveGhost(x,y){ if(dragging&&dragging.ghost){ dragging.ghost.style.left=x+"px"; dragging.ghost.style.top=y+"px"; } }
+  function slotAt(x,y){
+    var el=document.elementFromPoint(x,y);
+    while(el&&el!==document.body){ if(el.classList&&el.classList.contains("slot")) return el; el=el.parentNode; }
+    return null;
+  }
+  function onMove(e){
+    if(!dragging)return;
+    moveGhost(e.clientX,e.clientY);
+    var s=slotAt(e.clientX,e.clientY);
+    for(var k in slotsEls){ if(slotsEls.hasOwnProperty(k)){ var el=slotsEls[k]; el.classList.toggle("over", el===s && !el.classList.contains("filled")); } }
+  }
+  function onUp(e){
+    if(!dragging)return;
+    var s=slotAt(e.clientX,e.clientY);
+    for(var k in slotsEls){ if(slotsEls.hasOwnProperty(k)) slotsEls[k].classList.remove("over"); }
+    if(s) placeAttempt(s, dragging.el);
+    if(dragging.ghost&&dragging.ghost.parentNode) dragging.ghost.parentNode.removeChild(dragging.ghost);
+    dragging.el.classList.remove("dragging");
+    dragging=null;
+    document.removeEventListener("pointermove",onMove);
+    document.removeEventListener("pointerup",onUp);
+    document.removeEventListener("pointercancel",onUp);
+  }
+
+  function placeAttempt(cellEl, itemEl){
+    if(!cellEl||cellEl.classList.contains("filled")||cellEl.classList.contains("placed"))return;
+    var n=parseInt(cellEl.dataset.n,10), target=assignsMap[n];
+    if(cfg.strict){
+      renderItem(cellEl.querySelector(".drop"), itemEl.dataset.val);
+      cellEl.classList.add("placed"); cellEl._itemEl=itemEl; cellEl._val=itemEl.dataset.val;
+      itemEl.classList.add("used"); clickSnd(); placedCount++; updateProgress();
+      if(placedCount>=targetCount){ verifyBtn.disabled=false; verifyBtn.classList.add("ready"); }
+      return;
+    }
+    if(target && itemEl.dataset.val===target){
+      renderItem(cellEl.querySelector(".drop"), itemEl.dataset.val);
+      cellEl.classList.add("filled"); itemEl.classList.add("used");
+      clickSnd(); filled++; updateProgress();
+      if(filled>=targetCount) win();
+    }else{
+      cellEl.classList.add("bad"); setTimeout(function(){ cellEl.classList.remove("bad"); },420);
+      missSnd();
+    }
+  }
+  function removePlaced(cell){
+    if(!cfg.strict || !cell.classList.contains("placed") || cell.classList.contains("filled"))return;
+    var itemEl=cell._itemEl;
+    cell.querySelector(".drop").innerHTML=""; cell.classList.remove("placed"); cell._itemEl=null; cell._val=null;
+    if(itemEl) itemEl.classList.remove("used");
+    placedCount--; updateProgress();
+    verifyBtn.disabled = placedCount<targetCount; if(placedCount<targetCount) verifyBtn.classList.remove("ready");
+    tone(360,0.06,"sine",0.04);
+  }
+  function verify(){
+    if(placedCount<targetCount)return;
+    var slots=[]; for(var k in slotsEls){ if(slotsEls.hasOwnProperty(k)&&slotsEls[k].classList.contains("placed")) slots.push(slotsEls[k]); }
+    var allOk=true;
+    slots.forEach(function(el){ var n=parseInt(el.dataset.n,10); if(assignsMap[n]!==el._val) allOk=false; });
+    if(allOk){
+      slots.forEach(function(el){ el.classList.remove("placed"); el.classList.add("filled"); });
+      filled=targetCount; verifyBtn.disabled=true; verifyBtn.classList.remove("ready"); win();
+    }else{
+      slots.forEach(function(el){ el.classList.add("bad"); }); missSnd();
+      setTimeout(function(){
+        slots.forEach(function(el){ el.classList.remove("bad","placed"); el.querySelector(".drop").innerHTML=""; if(el._itemEl) el._itemEl.classList.remove("used"); el._itemEl=null; el._val=null; });
+        placedCount=0; updateProgress();
+        verifyBtn.disabled=true; verifyBtn.classList.remove("ready");
+        hintEl.textContent="順序不對，全部退回，再試一次";
+      },520);
+    }
+  }
+  function win(){ hintEl.textContent="全部歸位！暗門開啟…"; door.classList.add("open"); openSnd(); winSnd(); setTimeout(showReveal,950); }
+
+  document.getElementById("restartBtn").addEventListener("click",build);
+  verifyBtn.addEventListener("click",verify);
+
+  /* 揭示 */
+  var reveal=document.getElementById("reveal"), paperHolder=document.getElementById("paperHolder"), captionEl=document.getElementById("caption");
+  function showReveal(){
+    paperHolder.innerHTML="";
+    if(cfg.clueImage){ paperHolder.style.display="block"; var img=document.createElement("img"); img.src=cfg.clueImage; img.alt="線索"; img.addEventListener("click",function(){openLightbox(cfg.clueImage);}); paperHolder.appendChild(img); }
+    else if(cfg.caption){ paperHolder.style.display="none"; }
+    else { paperHolder.style.display="block"; var e=document.createElement("div"); e.className="paper-empty"; e.textContent="暗門已開啟！"; paperHolder.appendChild(e); }
+    captionEl.textContent=cfg.caption||""; captionEl.style.display=cfg.caption?"block":"none";
+    reveal.classList.add("show");
+  }
+  document.getElementById("closeReveal").addEventListener("click",function(){ reveal.classList.remove("show"); build(); });
+
+  var lightbox=document.getElementById("lightbox"), lightboxImg=document.getElementById("lightboxImg");
+  function openLightbox(src){ lightboxImg.src=src; lightbox.classList.add("show"); }
+  lightbox.addEventListener("click",function(){ lightbox.classList.remove("show"); });
+
+  /* 齒輪 → 後台 */
+  var gear=document.getElementById("gear"), holdTimer=null;
+  function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(openGate,600); }
+  function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
+  gear.addEventListener("pointerdown",function(e){e.preventDefault();startHold();});
+  gear.addEventListener("pointerup",cancelHold); gear.addEventListener("pointerleave",cancelHold); gear.addEventListener("pointercancel",cancelHold);
+
+  /* 密碼框 */
+  var gate=document.getElementById("gate"), gateBox=document.getElementById("gateBox"), gateInput=document.getElementById("gateInput"), gateErr=document.getElementById("gateErr");
+  function openGate(){ cancelHold(); gateErr.textContent=""; gateInput.value=""; gate.classList.add("show"); setTimeout(function(){try{gateInput.focus();}catch(e){}},60); }
+  function closeGate(){ gate.classList.remove("show"); }
+  function tryGate(){ if(gateInput.value===cfg.adminPass){ closeGate(); openAdmin(); } else { gateErr.textContent="密碼錯誤"; gateBox.classList.remove("shake-x"); void gateBox.offsetWidth; gateBox.classList.add("shake-x"); gateInput.value=""; try{gateInput.focus();}catch(e){} } }
+  document.getElementById("gateOk").addEventListener("click",tryGate);
+  document.getElementById("gateCancel").addEventListener("click",closeGate);
+  gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
+
+  /* 後台 */
+  var admin=document.getElementById("admin");
+  var rowsInput=document.getElementById("rowsInput"), colsInput=document.getElementById("colsInput"),
+      assignsInput=document.getElementById("assignsInput"), chips=document.getElementById("chips"),
+      strictSwitch=document.getElementById("strictSwitch"),
+      soundSwitch=document.getElementById("soundSwitch"), capInput=document.getElementById("capInput"),
+      clueFile=document.getElementById("clueFile"), clueUrl=document.getElementById("clueUrl"),
+      cluePreview=document.getElementById("cluePreview"), clueImg=document.getElementById("clueImg"),
+      adminPassInput=document.getElementById("adminPassInput");
+  var draft=null;
+
+  function openAdmin(){ draft={ rows:cfg.rows, cols:cfg.cols, assigns:cloneAssigns(cfg.assigns), strict:cfg.strict, sound:cfg.sound, caption:cfg.caption, clueImage:cfg.clueImage, adminPass:cfg.adminPass }; renderAdmin(); admin.classList.add("show"); }
+  function renderAdmin(){
+    rowsInput.value=draft.rows; colsInput.value=draft.cols;
+    assignsInput.value=draft.assigns.map(function(a){ return a.n+" = "+a.item; }).join("\n");
+    renderChips();
+    strictSwitch.classList.toggle("on",!!draft.strict);
+    soundSwitch.classList.toggle("on",!!draft.sound);
+    capInput.value=draft.caption||"";
+    if(draft.clueImage){ clueImg.src=draft.clueImage; cluePreview.classList.add("show"); clueUrl.value=(draft.clueImage.indexOf("data:")!==0)?draft.clueImage:""; } else { cluePreview.classList.remove("show"); clueUrl.value=""; }
+    adminPassInput.value=draft.adminPass||"";
+  }
+  function renderChips(){
+    chips.innerHTML="";
+    if(!draft.assigns.length)return;
+    var head=document.createElement("span"); head.className="chip"; head.textContent=draft.assigns.length+" 個物品"; chips.appendChild(head);
+    draft.assigns.forEach(function(a){
+      var c=document.createElement("span"); c.className="chip";
+      var num=document.createElement("span"); num.textContent=a.n+" →"; c.appendChild(num);
+      if(isImg(a.item)){ var im=document.createElement("img"); im.src=a.item; im.alt=""; c.appendChild(im); }
+      else { var b=document.createElement("b"); b.textContent=a.item; c.appendChild(b); }
+      chips.appendChild(c);
+    });
+  }
+  rowsInput.addEventListener("input",function(){ draft.rows=parseInt(rowsInput.value,10)||3; });
+  colsInput.addEventListener("input",function(){ draft.cols=parseInt(colsInput.value,10)||3; });
+  assignsInput.addEventListener("input",function(){ draft.assigns=parseAssigns(assignsInput.value); renderChips(); });
+  strictSwitch.addEventListener("click",function(){ draft.strict=!draft.strict; strictSwitch.classList.toggle("on",draft.strict); });
+  soundSwitch.addEventListener("click",function(){ draft.sound=!draft.sound; soundSwitch.classList.toggle("on",draft.sound); });
+  capInput.addEventListener("input",function(){ draft.caption=capInput.value; });
+  clueFile.addEventListener("change",function(){ var f=clueFile.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ draft.clueImage=r.result; clueUrl.value=""; clueImg.src=r.result; cluePreview.classList.add("show"); }; r.readAsDataURL(f); });
+  clueUrl.addEventListener("input",function(){ var v=clueUrl.value.trim(); if(v){ draft.clueImage=v; clueImg.src=v; cluePreview.classList.add("show"); } else if(!clueFile.files.length){ draft.clueImage=""; cluePreview.classList.remove("show"); } });
+  adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
+
+  function commit(){
+    cfg.rows=draft.rows; cfg.cols=draft.cols; cfg.assigns=cloneAssigns(draft.assigns); cfg.strict=draft.strict; cfg.sound=draft.sound;
+    cfg.caption=draft.caption; cfg.clueImage=draft.clueImage;
+    cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"9633";
+    normalize(cfg); save(cfg); build();
+  }
+  document.getElementById("saveBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); toast("已儲存"); });
+  document.getElementById("previewBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); });
+
+  /* 產生分享連結：用目前設定組出一條獨立網址 */
+  function showShareLink(){
+    commit();
+    var url=shareURL();
+    var ov=document.getElementById("shareOverlay");
+    if(!ov){
+      ov=document.createElement("div"); ov.id="shareOverlay";
+      ov.style.cssText="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)";
+      ov.innerHTML='<div style="width:100%;max-width:430px;padding:22px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)">'
+        +'<div style="font-family:var(--display,sans-serif);font-weight:600;letter-spacing:1px;color:#fff;font-size:16px;text-align:center">分享連結</div>'
+        +'<div style="color:#9aa1a9;font-size:12px;text-align:center;margin:6px 0 14px;line-height:1.6">這條網址就是「目前設定」的獨立版本。複製後發給玩家即可；要做另一款，回來改設定再產生一條新的。<br>（圖片請用網址，別上傳檔案，否則網址會過長）</div>'
+        +'<input id="shareUrlInput" readonly style="width:100%;background:#13171c;border:1px solid rgba(255,255,255,.08);border-radius:11px;color:#d9b878;padding:12px;font-size:13px;word-break:break-all;font-family:var(--display,monospace)">'
+        +'<div style="display:flex;gap:10px;margin-top:14px">'
+          +'<button id="shareCopy" style="flex:1;border:none;border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,#d9b878,#b8935a);color:#1c1206">複製連結</button>'
+          +'<button id="shareClose" style="flex:none;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e7e3da;border-radius:12px;padding:13px 18px;font-size:15px;cursor:pointer">關閉</button>'
+        +'</div>'
+        +'<div id="shareMsg" style="height:16px;color:#5fbf7e;font-size:12px;text-align:center;margin-top:10px"></div></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener("click",function(e){ if(e.target===ov) ov.style.display="none"; });
+    }
+    ov.style.display="flex";
+    var inp=document.getElementById("shareUrlInput"); inp.value=url;
+    document.getElementById("shareMsg").textContent="";
+    setTimeout(function(){ try{inp.focus();inp.setSelectionRange(0,url.length);}catch(e){} },50);
+    document.getElementById("shareClose").onclick=function(){ ov.style.display="none"; };
+    document.getElementById("shareCopy").onclick=function(){
+      var ok=function(){ document.getElementById("shareMsg").textContent="已複製！"; };
+      var fail=function(){ document.getElementById("shareMsg").textContent="請長按上方網址手動複製"; };
+      try{ inp.focus(); inp.setSelectionRange(0,url.length); }catch(e){}
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(ok,function(){ try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }); }
+      else { try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }
+    };
+  }
+  document.getElementById("shareBtn").addEventListener("click",showShareLink);
+
+  var toastEl=document.getElementById("toast"), toastT=null;
+  function toast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
+
+  build();
+})();
+</script>
+</body>
+</html>
