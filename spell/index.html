@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>咒語</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1c2128; --slate2:#161a20;
+    --brass:#d9b878; --brass-mid:#b8935a; --brass-lo:#8a6d3f;
+    --amber:#ffce78;
+    --txt:#e7e3da; --txt-dim:#9aa1a9;
+    --line:rgba(255,255,255,.08);
+    --paper:#f4ead8;
+    --display:"Chakra Petch", system-ui, sans-serif;
+    --cjk:"PingFang TC","Microsoft JhengHei","Noto Sans TC", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:var(--cjk);color:var(--txt);overflow:hidden;user-select:none;-webkit-user-select:none;
+    background:radial-gradient(120% 90% at 50% 18%, #29313a 0%, var(--slate) 44%, var(--slate2) 100%);}
+  .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;gap:18px}
+
+  .gear{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--txt-dim);background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;z-index:40;transition:color .2s,background .2s}
+  .gear:active{color:var(--brass)}
+  .gear svg{width:24px;height:24px}
+  .gear .ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--brass);clip-path:inset(0 0 100% 0);opacity:.9}
+  .gear.holding .ring{clip-path:inset(0 0 0 0);transition:clip-path .6s linear}
+
+  .brandline{font-family:var(--display);font-weight:600;letter-spacing:3px;font-size:12px;color:var(--brass-mid);text-transform:uppercase}
+
+  .idol{font-size:96px;line-height:1;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));transition:filter .4s ease, transform .4s ease}
+  .idol.listening{animation:idolpulse 1.3s ease-in-out infinite}
+  .idol.solved{filter:drop-shadow(0 0 30px var(--amber)) drop-shadow(0 0 14px var(--brass));transform:scale(1.06)}
+  @keyframes idolpulse{0%,100%{filter:drop-shadow(0 8px 16px rgba(0,0,0,.5))}50%{filter:drop-shadow(0 0 22px rgba(217,184,120,.6))}}
+
+  .prompt{font-size:17px;color:var(--txt);text-align:center;max-width:330px;line-height:1.7}
+  .heard{min-height:26px;color:var(--brass);font-family:var(--display);font-size:17px;letter-spacing:1px;text-align:center;padding:0 16px;min-width:60%}
+  .heard.dim{color:var(--txt-dim);font-family:var(--cjk);font-size:14px;letter-spacing:0}
+
+  .micbtn{border:none;border-radius:999px;padding:15px 32px;font-family:var(--cjk);font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:9px;
+    background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .micbtn svg{width:20px;height:20px}
+  .micbtn.on{background:linear-gradient(180deg,#e5605d,#c23b38);color:#fff;animation:micpulse 1.2s infinite}
+  @keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(229,96,93,.5)}50%{box-shadow:0 0 0 15px rgba(229,96,93,0)}}
+  .altlink{color:var(--txt-dim);font-size:13px;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:var(--cjk)}
+  .typebox{display:none;flex-direction:column;gap:10px;align-items:center;width:min(90vw,300px)}
+  .typebox.show{display:flex}
+  .typebox input{width:100%;background:#13171c;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:16px;text-align:center;font-family:var(--cjk)}
+  .typebox input:focus{outline:none;border-color:var(--brass-mid)}
+  .typebox button{border:none;border-radius:11px;padding:12px 24px;font-family:var(--cjk);font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+
+  /* 揭示 */
+  .reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 40%, rgba(255,206,120,.15), rgba(0,0,0,.8) 60%);backdrop-filter:blur(3px);padding:24px}
+  .reveal.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .case{position:relative;max-width:520px;width:100%;border-radius:20px;padding:20px;text-align:center;background:linear-gradient(180deg,#3a2e1a,#241c10);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 70px -20px rgba(0,0,0,.8);transform:translateY(14px) scale(.96);opacity:0}
+  .reveal.show .case{animation:rise .5s cubic-bezier(.2,.9,.3,1.2) .08s forwards}
+  @keyframes rise{to{transform:none;opacity:1}}
+  .case .tag{font-family:var(--display);letter-spacing:3px;font-size:11px;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
+  .paper{width:100%;border-radius:8px;background:var(--paper);overflow:hidden}
+  .paper img{width:100%;display:block;cursor:zoom-in}
+  .paper-empty{min-height:120px;display:flex;align-items:center;justify-content:center;color:#7a6a4f;font-size:15px;padding:24px}
+  .caption{margin-top:14px;color:#f7e9cf;font-size:16px;line-height:1.7;white-space:pre-wrap}
+  .case .close{margin:16px auto 2px;display:block;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff;padding:10px 26px;border-radius:999px;font-family:var(--cjk);font-size:14px;cursor:pointer}
+  .lightbox{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);padding:12px}
+  .lightbox.show{display:flex}.lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+  /* 密碼框 */
+  .gate{position:fixed;inset:0;z-index:48;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);backdrop-filter:blur(3px)}
+  .gate.show{display:flex}
+  .gate-box{width:100%;max-width:320px;padding:24px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .gate-title{font-family:var(--display);font-weight:600;letter-spacing:2px;color:#fff;font-size:16px;text-align:center}
+  .gate-sub{color:var(--txt-dim);font-size:12px;text-align:center;margin:6px 0 16px}
+  .gate-input{width:100%;height:54px;text-align:center;font-size:22px;letter-spacing:6px;font-family:var(--display);background:#13171c;border:1px solid var(--line);border-radius:12px;color:var(--brass)}
+  .gate-input:focus{outline:none;border-color:var(--brass-mid)}
+  .gate-err{height:18px;color:#e8857a;font-size:13px;text-align:center;margin:9px 0 3px}
+  .gate-actions{display:flex;gap:10px}
+  .gate-actions button{flex:1;border:none;border-radius:12px;padding:13px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .gate-ok{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .gate-cancel{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .shake-x{animation:shakex .35s}
+  @keyframes shakex{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  /* 後台 */
+  .admin{position:fixed;inset:0;z-index:50;display:none;background:linear-gradient(180deg,#13171c,#0e1115);overflow:auto;padding:26px 20px 60px}
+  .admin.show{display:block}
+  .admin-wrap{max-width:560px;margin:0 auto}
+  .admin h1{font-family:var(--display);font-weight:700;letter-spacing:1px;font-size:22px;margin:6px 0 4px;color:#fff}
+  .admin .sub{color:var(--txt-dim);font-size:13px;margin-bottom:24px}
+  .field{margin-bottom:24px}
+  .field>label{display:block;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:10px}
+  .field .desc{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6}
+  .url-input{width:100%;background:#1c2026;border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px 14px;font-size:15px;font-family:var(--cjk)}
+  .url-input:focus{outline:none;border-color:var(--brass-mid)}
+  textarea.url-input{min-height:80px;resize:vertical;line-height:1.7}
+  select.url-input{appearance:none;-webkit-appearance:none}
+  .toggle{display:flex;align-items:center;gap:12px}
+  .switch{position:relative;width:50px;height:28px;border-radius:999px;background:#2a313a;cursor:pointer;transition:background .2s;flex:none}
+  .switch.on{background:var(--brass-mid)}.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.switch.on i{left:25px}
+  .filebtn{display:inline-flex;align-items:center;gap:8px;background:#1c2026;border:1px solid var(--line);color:var(--txt);padding:12px 18px;border-radius:11px;font-size:14px;cursor:pointer}
+  input[type=file]{display:none}
+  .preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#15181d;display:none}
+  .preview.show{display:block}.preview img{width:100%;border-radius:8px;display:block}
+  .chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:#1c2026;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:14px;color:var(--brass)}
+  .actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;border:none;border-radius:13px;padding:15px;font-family:var(--cjk);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,var(--brass),var(--brass-mid));color:#1c1206}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .saved{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#222;color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;pointer-events:none;transition:.3s;border:1px solid var(--line);z-index:62}
+  .saved.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="gear" id="gear" title="長按進入後台">
+  <span class="ring"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</div>
+
+<div class="stage">
+  <span class="brandline">SPELL · 咒語</span>
+  <div class="idol" id="idol">🗿</div>
+  <div class="prompt" id="prompt">對著神像，說出通關的咒語。</div>
+  <div class="heard dim" id="heard">按下按鈕後開口說話</div>
+  <button class="micbtn" id="micbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>念咒語</button>
+  <button class="altlink" id="typeToggle">改用打字</button>
+  <div class="typebox" id="typebox">
+    <input id="typeInput" placeholder="輸入咒語…" autocomplete="off">
+    <button id="typeSubmit">說出咒語</button>
+  </div>
+</div>
+
+<div class="reveal" id="reveal">
+  <div class="case">
+    <div class="tag">UNLOCKED · 咒語應驗</div>
+    <div class="paper" id="paperHolder"></div>
+    <div class="caption" id="caption"></div>
+    <button class="close" id="closeReveal">收起</button>
+  </div>
+</div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt="放大"></div>
+
+<div class="gate" id="gate">
+  <div class="gate-box" id="gateBox">
+    <div class="gate-title">後台密碼</div>
+    <div class="gate-sub">請輸入密碼以進入設定</div>
+    <input class="gate-input" id="gateInput" type="password" autocomplete="off" placeholder="••••">
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-actions"><button class="gate-cancel" id="gateCancel">取消</button><button class="gate-ok" id="gateOk">進入</button></div>
+  </div>
+</div>
+
+<div class="admin" id="admin">
+  <div class="admin-wrap">
+    <h1>後台設定</h1>
+    <div class="sub">設定畫面提示與過關咒語，玩家不會看到這個畫面。</div>
+
+    <div class="field">
+      <label>畫面提示（給玩家看的指令）</label>
+      <textarea class="url-input" id="promptInput" placeholder="例如：對著神像，說出通關的咒語。"></textarea>
+    </div>
+    <div class="field">
+      <label>過關咒語（一行一句，任一句說中即過關）</label>
+      <textarea class="url-input" id="phrasesInput" placeholder="芝麻開門&#10;開門吧"></textarea>
+      <div class="chips" id="chips"></div>
+      <div class="desc">辨識到的內容含有其中任一句就解鎖。可寫多種說法／同義詞來提高命中率（語音辨識常有誤差）。</div>
+    </div>
+    <div class="field">
+      <label>比對方式</label>
+      <select class="url-input" id="modeSel"><option value="contains">包含即可（推薦）</option><option value="exact">完全相符</option></select>
+    </div>
+    <div class="field">
+      <label>辨識語言</label>
+      <select class="url-input" id="langSel"><option value="zh-TW">中文（台灣）</option><option value="zh-CN">中文（大陸）</option><option value="en-US">English</option><option value="ja-JP">日本語</option></select>
+    </div>
+
+    <div class="field">
+      <label>過關後說明文字（選填）</label>
+      <textarea class="url-input" id="capInput" placeholder="例如：石門緩緩開啟，裡面有一把鑰匙。" style="min-height:70px"></textarea>
+    </div>
+    <div class="field">
+      <label>過關後線索圖片（選填）</label>
+      <label class="filebtn" for="clueFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上傳圖片（僅限本機使用）</label>
+      <input type="file" id="clueFile" accept="image/*">
+      <input class="url-input" id="clueUrl" placeholder="或貼上圖片網址 https://..." style="margin-top:10px">
+      <div class="preview" id="cluePreview"><img id="clueImg" alt="預覽"></div>
+    </div>
+
+    <div class="field">
+      <label>音效</label>
+      <div class="toggle"><div class="switch" id="soundSwitch"><i></i></div><span style="color:var(--txt-dim);font-size:14px">過關與提示音效</span></div>
+    </div>
+    <div class="field">
+      <label>後台密碼</label>
+      <input class="url-input" id="adminPassInput" type="text" autocomplete="off" placeholder="進入後台用的密碼">
+      <div class="desc">留空會自動回復預設。</div>
+    </div>
+
+    <div class="actions"><button class="btn ghost" id="previewBtn">預覽前台</button><button class="btn ghost" id="shareBtn">產生分享連結</button>
+      <button class="btn primary" id="saveBtn">儲存並返回</button></div>
+  </div>
+</div>
+
+<div class="saved" id="toast">已儲存</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY="spell.config.v1", mem=null;
+  function load(){ try{var s=localStorage.getItem(KEY); if(s)return JSON.parse(s);}catch(e){} return mem; }
+  function save(c){ mem=c; try{localStorage.setItem(KEY,JSON.stringify(c));}catch(e){} }
+
+  /* 分享連結 */
+  function _b64encode(str){ var b=new TextEncoder().encode(str), s=""; for(var i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+  function _b64decode(s){ s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4)s+="="; var bin=atob(s), b=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i); return new TextDecoder().decode(b); }
+  function encodeCfg(c){ try{ return _b64encode(JSON.stringify(c)); }catch(e){ return ""; } }
+  function decodeCfg(s){ try{ return JSON.parse(_b64decode(s)); }catch(e){ return null; } }
+  function getSharedCfg(){ try{ var m=(location.search+location.hash).match(/[?#&]c=([^&]+)/); if(m&&m[1]) return decodeCfg(decodeURIComponent(m[1])); }catch(e){} return null; }
+  function shareURL(){ return location.origin+location.pathname+"?c="+encodeURIComponent(encodeCfg(cfg)); }
+
+  var cfg = getSharedCfg() || load() || { prompt:"對著神像，說出通關的咒語。", phrases:["芝麻開門"], mode:"contains", lang:"zh-TW", caption:"", clueImage:"", sound:true, adminPass:"9633" };
+
+  function parsePhrases(raw){
+    if(Array.isArray(raw)) return raw.map(function(x){return String(x).trim();}).filter(Boolean).slice(0,10);
+    return String(raw||"").split(/\n+/).map(function(s){return s.trim();}).filter(Boolean).slice(0,10);
+  }
+  function normalize(c){
+    c.prompt=(c.prompt!=null?String(c.prompt):"")||"對著神像，說出通關的咒語。";
+    c.phrases=parsePhrases(c.phrases); if(c.phrases.length<1)c.phrases=["芝麻開門"];
+    if(["contains","exact"].indexOf(c.mode)<0)c.mode="contains";
+    if(["zh-TW","zh-CN","en-US","ja-JP"].indexOf(c.lang)<0)c.lang="zh-TW";
+    c.caption=c.caption||""; c.clueImage=c.clueImage||""; c.sound=c.sound!==false;
+    if(typeof c.adminPass!=="string"||c.adminPass==="")c.adminPass="9633";
+  }
+  normalize(cfg);
+
+  function normText(s){ return String(s).toLowerCase().replace(/[\s\u3000]+/g,"").replace(/[.,!?;:'"，。！？、；：「」『』（）()\[\]…·~～\-]/g,""); }
+  function matchAny(text){
+    var t=normText(text); if(!t)return false;
+    for(var i=0;i<cfg.phrases.length;i++){ var p=normText(cfg.phrases[i]); if(!p)continue; if(cfg.mode==="exact"? t===p : t.indexOf(p)>=0) return true; }
+    return false;
+  }
+
+  /* 音效 */
+  var actx=null;
+  function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return actx; }
+  function tone(f,d,t,g){ if(!cfg.sound)return; var c=ac(); if(!c)return; var o=c.createOscillator(),gn=c.createGain();o.type=t||"sine";o.frequency.value=f;gn.gain.value=g||0.05;o.connect(gn);gn.connect(c.destination);var tt=c.currentTime;gn.gain.exponentialRampToValueAtTime(0.0001,tt+d);o.start(tt);o.stop(tt+d);}
+  function failSnd(){ tone(160,0.25,"sawtooth",0.05); }
+  function winSnd(){ tone(392,0.16,"sine",0.06); setTimeout(function(){tone(523,0.16,"sine",0.06);},120); setTimeout(function(){tone(659,0.16,"sine",0.06);},240); setTimeout(function(){tone(880,0.4,"sine",0.06);},360); }
+
+  /* 語音辨識 */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var supported = !!SR, rec=null, listening=false, solved=false;
+  var idol=document.getElementById("idol"), promptEl=document.getElementById("prompt"), heardEl=document.getElementById("heard"),
+      micbtn=document.getElementById("micbtn"), typeToggle=document.getElementById("typeToggle"),
+      typebox=document.getElementById("typebox"), typeInput=document.getElementById("typeInput"), typeSubmit=document.getElementById("typeSubmit");
+
+  function setHeard(t,dim){ heardEl.textContent=t; heardEl.classList.toggle("dim",!!dim); }
+  function setListening(on){
+    listening=on;
+    idol.classList.toggle("listening",on);
+    micbtn.classList.toggle("on",on);
+    micbtn.childNodes[micbtn.childNodes.length-1].nodeValue = on? "聆聽中…" : "念咒語";
+  }
+  function showType(on){ typebox.classList.toggle("show",on); if(on){ setTimeout(function(){try{typeInput.focus();}catch(e){}},50); } }
+
+  function initRec(){
+    if(!supported) return;
+    rec=new SR(); rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=3;
+    rec.onresult=function(e){
+      var all="";
+      for(var i=0;i<e.results.length;i++){
+        var r=e.results[i];
+        for(var j=0;j<r.length;j++){ if(matchAny(r[j].transcript)){ succeed(); return; } }
+        all+=r[0].transcript;
+      }
+      if(matchAny(all)){ succeed(); return; }
+      setHeard(all||"…", false);
+    };
+    rec.onerror=function(e){
+      setListening(false);
+      if(e.error==="not-allowed"||e.error==="service-not-allowed"){ setHeard("麥克風被拒或不可用，請改用打字",true); showType(true); }
+      else if(e.error==="no-speech"){ setHeard("沒聽到聲音，再試一次",true); }
+      else if(e.error==="aborted"){ /* ignore */ }
+      else { setHeard("無法辨識（"+e.error+"），可改用打字",true); showType(true); }
+    };
+    rec.onend=function(){ if(!solved) setListening(false); };
+  }
+  initRec();
+
+  function listen(){
+    if(solved)return; ac();
+    if(!supported){ setHeard("此瀏覽器不支援語音辨識，請改用打字",true); showType(true); return; }
+    if(listening){ try{rec.stop();}catch(e){} return; }
+    rec.lang=cfg.lang;
+    setHeard("…",false); setListening(true);
+    try{ rec.start(); }catch(e){ setListening(false); }
+  }
+  micbtn.addEventListener("click",listen);
+  typeToggle.addEventListener("click",function(){ showType(!typebox.classList.contains("show")); });
+  typeSubmit.addEventListener("click",function(){ ac(); if(matchAny(typeInput.value)){ succeed(); } else { setHeard("咒語不對，神像毫無反應",true); failSnd(); } });
+  typeInput.addEventListener("keydown",function(e){ if(e.key==="Enter") typeSubmit.click(); });
+
+  function succeed(){
+    if(solved)return; solved=true;
+    try{ if(rec) rec.stop(); }catch(e){}
+    setListening(false); idol.classList.add("solved");
+    setHeard("咒語應驗！", false);
+    winSnd();
+    setTimeout(showReveal, 700);
+  }
+
+  function build(){
+    solved=false; listening=false;
+    idol.classList.remove("solved","listening");
+    promptEl.textContent=cfg.prompt;
+    setHeard(supported? "按下按鈕後開口說話" : "此瀏覽器不支援語音，請用打字", true);
+    showType(false); typeInput.value="";
+    document.getElementById("reveal").classList.remove("show");
+  }
+
+  /* 揭示 */
+  var reveal=document.getElementById("reveal"), paperHolder=document.getElementById("paperHolder"), captionEl=document.getElementById("caption");
+  function showReveal(){
+    paperHolder.innerHTML="";
+    if(cfg.clueImage){ paperHolder.style.display="block"; var img=document.createElement("img"); img.src=cfg.clueImage; img.alt="線索"; img.addEventListener("click",function(){openLightbox(cfg.clueImage);}); paperHolder.appendChild(img); }
+    else if(cfg.caption){ paperHolder.style.display="none"; }
+    else { paperHolder.style.display="block"; var e=document.createElement("div"); e.className="paper-empty"; e.textContent="咒語應驗，封印解除！"; paperHolder.appendChild(e); }
+    captionEl.textContent=cfg.caption||""; captionEl.style.display=cfg.caption?"block":"none";
+    reveal.classList.add("show");
+  }
+  document.getElementById("closeReveal").addEventListener("click",function(){ reveal.classList.remove("show"); build(); });
+  var lightbox=document.getElementById("lightbox"), lightboxImg=document.getElementById("lightboxImg");
+  function openLightbox(src){ lightboxImg.src=src; lightbox.classList.add("show"); }
+  lightbox.addEventListener("click",function(){ lightbox.classList.remove("show"); });
+
+  /* 齒輪 → 後台 */
+  var gear=document.getElementById("gear"), holdTimer=null;
+  function startHold(){ gear.classList.add("holding"); holdTimer=setTimeout(openGate,600); }
+  function cancelHold(){ gear.classList.remove("holding"); clearTimeout(holdTimer); }
+  gear.addEventListener("pointerdown",function(e){e.preventDefault();startHold();});
+  gear.addEventListener("pointerup",cancelHold); gear.addEventListener("pointerleave",cancelHold); gear.addEventListener("pointercancel",cancelHold);
+
+  /* 密碼框 */
+  var gate=document.getElementById("gate"), gateBox=document.getElementById("gateBox"), gateInput=document.getElementById("gateInput"), gateErr=document.getElementById("gateErr");
+  function openGate(){ cancelHold(); gateErr.textContent=""; gateInput.value=""; gate.classList.add("show"); setTimeout(function(){try{gateInput.focus();}catch(e){}},60); }
+  function closeGate(){ gate.classList.remove("show"); }
+  function tryGate(){ if(gateInput.value===cfg.adminPass){ closeGate(); openAdmin(); } else { gateErr.textContent="密碼錯誤"; gateBox.classList.remove("shake-x"); void gateBox.offsetWidth; gateBox.classList.add("shake-x"); gateInput.value=""; try{gateInput.focus();}catch(e){} } }
+  document.getElementById("gateOk").addEventListener("click",tryGate);
+  document.getElementById("gateCancel").addEventListener("click",closeGate);
+  gateInput.addEventListener("keydown",function(e){ if(e.key==="Enter")tryGate(); });
+
+  /* 後台 */
+  var admin=document.getElementById("admin");
+  var promptInput=document.getElementById("promptInput"), phrasesInput=document.getElementById("phrasesInput"), chips=document.getElementById("chips"),
+      modeSel=document.getElementById("modeSel"), langSel=document.getElementById("langSel"), capInput=document.getElementById("capInput"),
+      clueFile=document.getElementById("clueFile"), clueUrl=document.getElementById("clueUrl"), cluePreview=document.getElementById("cluePreview"), clueImg=document.getElementById("clueImg"),
+      soundSwitch=document.getElementById("soundSwitch"), adminPassInput=document.getElementById("adminPassInput");
+  var draft=null;
+
+  function openAdmin(){ try{if(rec)rec.stop();}catch(e){} setListening(false);
+    draft={ prompt:cfg.prompt, phrases:cfg.phrases.slice(), mode:cfg.mode, lang:cfg.lang, caption:cfg.caption, clueImage:cfg.clueImage, sound:cfg.sound, adminPass:cfg.adminPass };
+    renderAdmin(); admin.classList.add("show"); }
+  function renderAdmin(){
+    promptInput.value=draft.prompt;
+    phrasesInput.value=draft.phrases.join("\n"); renderChips();
+    modeSel.value=draft.mode; langSel.value=draft.lang;
+    capInput.value=draft.caption||"";
+    if(draft.clueImage){ clueImg.src=draft.clueImage; cluePreview.classList.add("show"); clueUrl.value=(draft.clueImage.indexOf("data:")!==0)?draft.clueImage:""; } else { cluePreview.classList.remove("show"); clueUrl.value=""; }
+    soundSwitch.classList.toggle("on",!!draft.sound);
+    adminPassInput.value=draft.adminPass||"";
+  }
+  function renderChips(){ chips.innerHTML=""; draft.phrases.forEach(function(p){ var c=document.createElement("span"); c.className="chip"; c.textContent="「"+p+"」"; chips.appendChild(c); }); }
+  promptInput.addEventListener("input",function(){ draft.prompt=promptInput.value; });
+  phrasesInput.addEventListener("input",function(){ draft.phrases=parsePhrases(phrasesInput.value); renderChips(); });
+  modeSel.addEventListener("change",function(){ draft.mode=modeSel.value; });
+  langSel.addEventListener("change",function(){ draft.lang=langSel.value; });
+  capInput.addEventListener("input",function(){ draft.caption=capInput.value; });
+  clueFile.addEventListener("change",function(){ var f=clueFile.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ draft.clueImage=r.result; clueUrl.value=""; clueImg.src=r.result; cluePreview.classList.add("show"); }; r.readAsDataURL(f); });
+  clueUrl.addEventListener("input",function(){ var v=clueUrl.value.trim(); if(v){ draft.clueImage=v; clueImg.src=v; cluePreview.classList.add("show"); } else if(!clueFile.files.length){ draft.clueImage=""; cluePreview.classList.remove("show"); } });
+  soundSwitch.addEventListener("click",function(){ draft.sound=!draft.sound; soundSwitch.classList.toggle("on",draft.sound); });
+  adminPassInput.addEventListener("input",function(){ draft.adminPass=adminPassInput.value; });
+
+  function commit(){
+    cfg.prompt=draft.prompt; cfg.phrases=draft.phrases.slice(); cfg.mode=draft.mode; cfg.lang=draft.lang;
+    cfg.caption=draft.caption; cfg.clueImage=draft.clueImage; cfg.sound=draft.sound;
+    cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"9633";
+    normalize(cfg); save(cfg); build();
+  }
+  document.getElementById("saveBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); toast("已儲存"); });
+  document.getElementById("previewBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); });
+
+  /* 產生分享連結 */
+  function showShareLink(){
+    commit();
+    var url=shareURL(), ov=document.getElementById("shareOverlay");
+    if(!ov){
+      ov=document.createElement("div"); ov.id="shareOverlay";
+      ov.style.cssText="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,10,13,.82);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)";
+      ov.innerHTML='<div style="width:100%;max-width:430px;padding:22px;border-radius:18px;background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)">'
+        +'<div style="font-family:var(--display,sans-serif);font-weight:600;letter-spacing:1px;color:#fff;font-size:16px;text-align:center">分享連結</div>'
+        +'<div style="color:#9aa1a9;font-size:12px;text-align:center;margin:6px 0 14px;line-height:1.6">這條網址就是「目前設定」的獨立版本。複製後發給玩家即可；要做另一款，回來改設定再產生一條新的。</div>'
+        +'<input id="shareUrlInput" readonly style="width:100%;background:#13171c;border:1px solid rgba(255,255,255,.08);border-radius:11px;color:#d9b878;padding:12px;font-size:13px;word-break:break-all;font-family:var(--display,monospace)">'
+        +'<div style="display:flex;gap:10px;margin-top:14px">'
+          +'<button id="shareCopy" style="flex:1;border:none;border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(180deg,#d9b878,#b8935a);color:#1c1206">複製連結</button>'
+          +'<button id="shareClose" style="flex:none;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e7e3da;border-radius:12px;padding:13px 18px;font-size:15px;cursor:pointer">關閉</button>'
+        +'</div>'
+        +'<div id="shareMsg" style="height:16px;color:#5fbf7e;font-size:12px;text-align:center;margin-top:10px"></div></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener("click",function(e){ if(e.target===ov) ov.style.display="none"; });
+    }
+    ov.style.display="flex";
+    var inp=document.getElementById("shareUrlInput"); inp.value=url; document.getElementById("shareMsg").textContent="";
+    setTimeout(function(){ try{inp.focus();inp.setSelectionRange(0,url.length);}catch(e){} },50);
+    document.getElementById("shareClose").onclick=function(){ ov.style.display="none"; };
+    document.getElementById("shareCopy").onclick=function(){
+      var ok=function(){ document.getElementById("shareMsg").textContent="已複製！"; }, fail=function(){ document.getElementById("shareMsg").textContent="請長按上方網址手動複製"; };
+      try{ inp.focus(); inp.setSelectionRange(0,url.length); }catch(e){}
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(ok,function(){ try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }); }
+      else { try{document.execCommand("copy")?ok():fail();}catch(e){fail();} }
+    };
+  }
+  document.getElementById("shareBtn").addEventListener("click",showShareLink);
+
+  var toastEl=document.getElementById("toast"), toastT=null;
+  function toast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove("show");},1600); }
+
+  build();
+})();
+</script>
+</body>
+</html>

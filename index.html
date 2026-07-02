@@ -365,7 +365,10 @@
         href:"phone/", status:"live", icon:"phone", shareCode:true },
       { id:"m11", code:"機關 No.11", name:"密室收音機",
         desc:"扭動旋鈕或拖曳刻度調頻，靠近電台時沙沙聲變小、訊號變強，調準頻率（如 FM 98.7）就鎖定並播放神祕廣播。可設定多個電台頻率與對應廣播、波段範圍與對頻難度。",
-        href:"radio/", status:"live", icon:"radio", shareCode:true }
+        href:"radio/", status:"live", icon:"radio", shareCode:true },
+      { id:"m12", code:"機關 No.12", name:"咒語",
+        desc:"畫面顯示提示，玩家按下按鈕對神像喊出通關口號（用語音辨識），偵測到關鍵字就即刻解鎖。可設定畫面提示、多組過關咒語、比對方式與辨識語言；不支援語音時可改用打字。",
+        href:"spell/", status:"live", icon:"spell", shareCode:true }
     ]
   };
 
@@ -383,7 +386,8 @@
     lights:'<rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/>',
     cabinet:'<rect x="4" y="3" width="16" height="18" rx="1.5"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><circle cx="15.5" cy="6" r=".9"/><circle cx="15.5" cy="12" r=".9"/><circle cx="15.5" cy="18" r=".9"/>',
     phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
-    radio:'<path d="M15 5 6 9"/><rect x="2" y="9" width="20" height="11" rx="2"/><circle cx="16.5" cy="14.5" r="3"/><line x1="7" y1="13" x2="7" y2="16"/>'
+    radio:'<path d="M15 5 6 9"/><rect x="2" y="9" width="20" height="11" rx="2"/><circle cx="16.5" cy="14.5" r="3"/><line x1="7" y1="13" x2="7" y2="16"/>',
+    spell:'<path d="M12 2.5l1.7 4.3 4.3 1.7-4.3 1.7L12 14.5l-1.7-4.3L6 8.5l4.3-1.7z"/><circle cx="18.5" cy="17" r="1.2"/><circle cx="6" cy="16.5" r="1"/>'
   };
   var ICON_KEYS = Object.keys(ICONS);
 
