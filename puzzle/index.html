@@ -122,6 +122,13 @@
   .saved.show{opacity:1;transform:translateX(-50%)}
 
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+  /* 示範提示 */
+  .hintbtn{position:fixed;top:14px;left:14px;z-index:41;border:1px solid rgba(217,184,120,.4);background:rgba(0,0,0,.35);color:var(--brass);border-radius:999px;padding:8px 14px;font-family:var(--cjk);font-size:13px;cursor:pointer}
+  .hintbtn:active{background:rgba(217,184,120,.15)}
+  .hintpop{position:fixed;top:52px;left:14px;z-index:41;max-width:min(80vw,320px);background:linear-gradient(180deg,#222932,#1a1f26);border:1px solid rgba(217,184,120,.35);border-radius:12px;padding:12px 14px;color:var(--txt);font-size:14px;line-height:1.7;box-shadow:0 16px 34px -16px rgba(0,0,0,.7);display:none;word-break:break-word}
+  .hintpop.show{display:block}
+  .hintpop .t{font-family:var(--display);font-size:11px;letter-spacing:2px;color:var(--brass-mid);margin-bottom:5px}
+  .hintpop b{color:var(--brass)}
 </style>
 </head>
 <body>
@@ -148,6 +155,9 @@
   </div>
 </div>
 <div class="lightbox" id="lightbox"><img id="lightboxImg" alt="放大"></div>
+
+<button class="hintbtn" id="hintBtn">💡 提示</button>
+<div class="hintpop" id="hintPop"><div class="t">示範提示 · 直接給答案</div><div id="hintBody"></div></div>
 
 <div class="gate" id="gate">
   <div class="gate-box" id="gateBox">
@@ -219,6 +229,11 @@
       <div class="desc">留空會自動回復預設。</div>
     </div>
 
+        <div class="field">
+      <label>提示內容</label>
+      <textarea class="url-input" id="hintInput" placeholder="留空＝自動顯示答案" style="min-height:60px"></textarea>
+      <div class="desc">玩家按左上「💡 提示」時顯示的內容。留空則自動顯示目前答案（示範用）；也可自己寫一句較含蓄的提示。</div>
+    </div>
     <div class="actions"><button class="btn ghost" id="previewBtn">預覽前台</button><button class="btn ghost" id="shareBtn">產生分享連結</button>
       <button class="btn primary" id="saveBtn">儲存並返回</button></div>
   </div>
@@ -449,7 +464,7 @@
   var draft=null;
 
   function openAdmin(){
-    draft={ mode:cfg.mode, text:cfg.text, split:cfg.split, image:cfg.image, size:cfg.size, caption:cfg.caption, clueImage:cfg.clueImage, sound:cfg.sound, adminPass:cfg.adminPass };
+    draft={ mode:cfg.mode, text:cfg.text, split:cfg.split, image:cfg.image, size:cfg.size, caption:cfg.caption, clueImage:cfg.clueImage, sound:cfg.sound, adminPass:cfg.adminPass, hint:(cfg.hint||"") };
     renderAdmin(); admin.classList.add("show");
   }
   function renderAdmin(){
@@ -463,7 +478,7 @@
     capInput.value=draft.caption||"";
     if(draft.clueImage){ clueImg.src=draft.clueImage; cluePreview.classList.add("show"); clueUrl.value=(draft.clueImage.indexOf("data:")!==0)?draft.clueImage:""; } else { cluePreview.classList.remove("show"); clueUrl.value=""; }
     soundSwitch.classList.toggle("on",!!draft.sound);
-    adminPassInput.value=draft.adminPass||"";
+    adminPassInput.value=draft.adminPass||""; var __hi2=document.getElementById("hintInput"); if(__hi2)__hi2.value=draft.hint||"";
   }
   modeSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.mode=b.dataset.m; renderAdmin(); });
   splitSeg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; draft.split=b.dataset.s; renderAdmin(); });
@@ -480,7 +495,7 @@
   function commit(){
     cfg.mode=draft.mode; cfg.text=draft.text; cfg.split=draft.split; cfg.image=draft.image; cfg.size=draft.size;
     cfg.caption=draft.caption; cfg.clueImage=draft.clueImage; cfg.sound=draft.sound;
-    cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"9633";
+    cfg.adminPass=(draft.adminPass&&draft.adminPass.length)?draft.adminPass:"9633"; cfg.hint=(draft.hint||"");
     normalize(cfg); save(cfg); renderBoard();
   }
   document.getElementById("saveBtn").addEventListener("click",function(){ commit(); admin.classList.remove("show"); toast("已儲存"); });
@@ -526,6 +541,15 @@
 
   /* 啟動 */
   renderBoard();
+
+  /* 示範提示：直接給答案 */
+  function answerText(){ if(cfg.mode==="image") return "把碎片拼回<b>完整的圖片</b>即可。"; return "正確排列：<b>"+String(cfg.text).replace(/[<&>]/g,"")+"</b>"; }
+  var __hb=document.getElementById("hintBtn"), __hp=document.getElementById("hintPop"), __hbody=document.getElementById("hintBody");
+  if(__hb){
+    __hb.addEventListener("click",function(){ if(__hp.classList.contains("show")){__hp.classList.remove("show");return;} if(cfg.hint&&String(cfg.hint).trim()){ __hbody.textContent=cfg.hint; } else { try{__hbody.innerHTML=answerText();}catch(e){__hbody.textContent="(無法顯示提示)";} } __hp.classList.add("show"); });
+    var __hi=document.getElementById("hintInput"); if(__hi) __hi.addEventListener("input",function(){ if(draft) draft.hint=__hi.value; });
+    document.addEventListener("pointerdown",function(e){ if(__hp.classList.contains("show") && !__hp.contains(e.target) && e.target!==__hb && !__hb.contains(e.target)) __hp.classList.remove("show"); });
+  }
 })();
 </script>
 </body>
